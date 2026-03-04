@@ -152,6 +152,13 @@ void Player::initialize()
             {
                 move_vec = axis.get_normalized_screen_direction();
             });
+
+    AuroraEngine::Engine::get().get_input_subsystem().register_callback(
+            AuroraEngine::InputAction(SDL_Scancode::SDL_SCANCODE_R, true),
+            [this]()
+            {
+                this->destroy();
+            });
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -206,6 +213,8 @@ void Player::cleanup()
         SDL_DestroyTexture(m_texture);
         m_texture = nullptr;
     }
+
+    printf("Player is kil :'(\n");
 }
 
 } // namespace TestGame

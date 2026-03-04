@@ -37,7 +37,12 @@ void Window::create()
         return;
     }
 
-    set_size(m_specification.logical_size);
+    set_size(m_specification.window_size);
+    SDL_SetRenderLogicalPresentation(m_sdl_renderer,
+                                     static_cast<int>(m_specification.logical_size.x),
+                                     static_cast<int>(m_specification.logical_size.y),
+                                     SDL_RendererLogicalPresentation::SDL_LOGICAL_PRESENTATION_LETTERBOX);
+
 }
 
 void Window::destroy()

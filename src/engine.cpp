@@ -73,7 +73,7 @@ void Engine::run()
     bool running = true;
 
     // Using a variable time step method
-    // constexpr std::uint64_t target_frame_time = static_cast<std::uint64_t>((1.f / 144.f) * 1E+9);
+//    auto target_frame_time = static_cast<std::uint64_t>((1.f / 144.f) * 1E+9);
     std::uint64_t previous_frame_time = get_current_time();
     while (running)
     {
@@ -85,18 +85,19 @@ void Engine::run()
         update(delta_time);
         render();
 
-        // std::uint64_t frame_end_time = get_current_time();
-        // // float frame_time = static_cast<float>(frame_end_time - frame_start_time) / 1'000.f;
-        // // float frame_sleep_time = target_frame_time - frame_time;
-        // std::int64_t frame_sleep_ns = static_cast<std::int64_t>(target_frame_time - (frame_end_time - frame_start_time));
-        // if (frame_sleep_ns > 0)
-        // {
-        //     SDL_DelayPrecise(frame_sleep_ns);
-        // }
-        // else
-        // {
-        //     printf("Frame longer than target\n");
-        // }
+//        std::uint64_t frame_end_time = get_current_time();
+//        // // float frame_time = static_cast<float>(frame_end_time - frame_start_time) / 1'000.f;
+//        float frame_time = time_delta<TIME_UNITS>(frame_start_time, frame_end_time);
+//        float frame_sleep_time = static_cast<float>(target_frame_time) - frame_time;
+//        auto frame_sleep_ns = static_cast<std::int64_t>(frame_sleep_time);
+//        if (frame_sleep_ns > 0)
+//        {
+//            SDL_DelayPrecise(frame_sleep_ns);
+//        }
+//        else
+//        {
+//            printf("Frame longer than target\n");
+//        }
 
         previous_frame_time = frame_start_time;
     }

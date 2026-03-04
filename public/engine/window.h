@@ -34,11 +34,7 @@ public:
 
     void set_size(glm::vec2 new_size)
     {
-        m_specification.logical_size = new_size;
-        SDL_SetRenderLogicalPresentation(m_sdl_renderer,
-                                         static_cast<int>(new_size.x),
-                                         static_cast<int>(new_size.y),
-                                         SDL_RendererLogicalPresentation::SDL_LOGICAL_PRESENTATION_LETTERBOX);
+        m_specification.window_size = new_size;
     }
 
     SDL_Window* get_sdl_window() const { return m_sdl_window; }

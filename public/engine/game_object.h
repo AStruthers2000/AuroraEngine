@@ -16,16 +16,8 @@
 
 namespace AuroraEngine
 {
-// enum class GameObjectType : std::uint8_t
-// {
-//     Player,
-//     Enemy,
-//     Level,
-// };
 
-// class GameWorld;
-
-class GameObject
+class GameObject : public std::enable_shared_from_this<GameObject>
 {
 public:
     enum class EGameObjectState
@@ -36,7 +28,7 @@ public:
         Destroyed,
     };
 
-    GameObject(GameWorld& owning_world);
+    explicit GameObject(GameWorld& owning_world);
     GameObject(GameWorld& owning_world, TransformComponent const& initial_transform);
 
     virtual ~GameObject() = default;

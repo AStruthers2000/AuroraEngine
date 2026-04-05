@@ -30,7 +30,7 @@ public:
     /// @note initialize() and update() may call add_object(), which inserts into
     /// m_pending_initialize_objects, not m_game_objects, so iterators on m_game_objects remain
     /// valid. Newly added objects will be initialized next frame.
-    bool add_object(std::unique_ptr<GameObject> object, int update_order);
+    bool add_object(std::shared_ptr<GameObject> object, int update_order);
 
     void initialize();
     void update(float delta_time);
@@ -40,8 +40,8 @@ public:
 private:
     Engine& m_engine;
 
-    using PrioritizedObject = std::pair<int, std::unique_ptr<GameObject>>;
-    static void insert_sorted(int priority, std::unique_ptr<GameObject> object, std::list<PrioritizedObject>& collection);
+    using PrioritizedObject = std::pair<int, std::shared_ptr<GameObject>>;
+    static void insert_sorted(int priority, std::shared_ptr<GameObject> object, std::list<PrioritizedObject>& collection);
 
     std::list<PrioritizedObject> m_game_objects;
 

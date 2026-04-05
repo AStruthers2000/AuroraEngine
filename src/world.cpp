@@ -49,7 +49,7 @@ void GameWorld::cleanup()
 }
 
 //--------------------------------------------------------------------------------------------------
-bool GameWorld::add_object(std::unique_ptr<GameObject> object, int update_order)
+bool GameWorld::add_object(std::shared_ptr<GameObject> object, int update_order)
 {
     object->set_object_state(GameObject::EGameObjectState::Pending);
     insert_sorted(update_order, std::move(object), m_pending_initialize_objects);
@@ -85,6 +85,7 @@ void GameWorld::update(float delta_time)
         // Check state again — update() may have marked the object as Destroyed.
         if (game_object->get_object_state() == GameObject::EGameObjectState::Destroyed)
         {
+            game_object.reset();
             it = m_game_objects.erase(it);
         }
         else
@@ -106,7 +107,7 @@ void GameWorld::render(SDL_Renderer* renderer)
     }
 }
 
-void GameWorld::insert_sorted(int priority, std::unique_ptr<GameObject> object, std::list<PrioritizedObject>& collection)
+void GameWorld::insert_sorted(int priority, std::shared_ptr<GameObject> object, std::list<PrioritizedObject>& collection)
 {
     // Find the first element with a higher update order
     auto it = std::find_if(collection.begin(), collection.end(),

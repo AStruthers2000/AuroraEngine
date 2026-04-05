@@ -1,44 +1,59 @@
-cmake_minimum_required(VERSION 3.20)
-project(sdl3-tutorial LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.28)
+project(AuroraEngine LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Option to build test executable (disabled during Conan packaging)
+option(BUILD_TESTING "Build test executable" ON)
 
 # Find external dependencies
 find_package(glm CONFIG REQUIRED)
 find_package(SDL3 CONFIG REQUIRED)
 find_package(SDL3_image CONFIG REQUIRED)
 
-enable_testing()
-
 # Library
-add_library(sdl3_engine
-  ${PROJECT_SOURCE_DIR}/src/engine/animation.cpp
-  ${PROJECT_SOURCE_DIR}/src/engine/game_object.cpp
-  ${PROJECT_SOURCE_DIR}/src/engine/main_app.cpp
-  ${PROJECT_SOURCE_DIR}/src/engine/timer.cpp
+add_library(AuroraEngine
+    ${PROJECT_SOURCE_DIR}/src/engine.cpp
+    ${PROJECT_SOURCE_DIR}/src/game_object.cpp
+    ${PROJECT_SOURCE_DIR}/src/window.cpp
+    ${PROJECT_SOURCE_DIR}/src/world.cpp
+
+    ${PROJECT_SOURCE_DIR}/src/subsystems/input_subsystem.cpp
 )
 
-target_include_directories(sdl3_engine
-  PUBLIC
-    ${PROJECT_SOURCE_DIR}/public
-  PRIVATE
-    ${PROJECT_SOURCE_DIR}/src
+# Include directories
+target_include_directories(AuroraEngine
+    PUBLIC
+        ${PROJECT_SOURCE_DIR}/public
+    PRIVATE
+        ${PROJECT_SOURCE_DIR}/src
 )
 
 # Link dependencies to engine
-target_link_libraries(sdl3_engine PUBLIC glm::glm SDL3::SDL3 SDL3_image::SDL3_image)
-
-# Executable
-add_executable(sdl3_tutorial
-  ${PROJECT_SOURCE_DIR}/src/main.cpp
+target_link_libraries(AuroraEngine
+    PUBLIC
+        glm::glm
+        SDL3::SDL3
+        SDL3_image::SDL3_image
 )
 
-target_include_directories(sdl3_tutorial
-  PRIVATE
-    ${PROJECT_SOURCE_DIR}/src
-)
+# Test executable (only built during local development)
+if(BUILD_TESTING)
+    add_executable(AuroraEngineTest
+        ${PROJECT_SOURCE_DIR}/game/main.cpp
+        ${PROJECT_SOURCE_DIR}/game/player.cpp
+    )
 
-target_link_libraries(sdl3_tutorial PRIVATE sdl3_engine)
+    # Include game directory for player.h
+    target_include_directories(AuroraEngineTest
+        PRIVATE
+            ${PROJECT_SOURCE_DIR}/game
+    )
 
-add_subdirectory(tests)
+    # Link to AuroraEngine library
+    target_link_libraries(AuroraEngineTest
+        PRIVATE
+            AuroraEngine
+    )
+endif()

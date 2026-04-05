@@ -1,17 +1,18 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Copyright (C) 2026 AStruthers2000 - All Rights Reserved
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/// @brief Common type definitions for the Aurora Engine.
+///
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#ifndef ENGINE_TYPES_H
-#define ENGINE_TYPES_H
+#ifndef AURORA_ENGINE_PUBLIC_H
+#define AURORA_ENGINE_PUBLIC_H
 
-#include <string>
-#include <type_traits>
+#include "engine/engine.h"
+#include "engine/game_object.h"
+#include "engine/time_keeper.h"
+#include "engine/window.h"
+#include "engine/world.h"
 
-namespace AuroraEngine
-{
+#include <SDL3/SDL.h>
+#include <SDL3_image/SDL_image.h>
 
-} // namespace AuroraEngine
-
-#endif // ENGINE_TYPES_H
+#endif // AURORA_ENGINE_PUBLIC_H

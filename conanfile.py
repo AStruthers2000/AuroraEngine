@@ -13,7 +13,7 @@ class AuroraEngineConan(ConanFile):
     generators = "CMakeToolchain", "CMakeDeps"
 
     # Export source files needed for building
-    exports_sources = "CMakeLists.txt", "src/*", "public/*"
+    exports_sources = "CMakeLists.txt", "src/*", "public/*", "game/*"
 
     def requirements(self):
         # GLM math library

@@ -6,11 +6,11 @@
 #ifndef AURORA_ENGINE_PUBLIC_H
 #define AURORA_ENGINE_PUBLIC_H
 
-#include "engine/engine.h"
-#include "engine/game_object.h"
-#include "engine/time_keeper.h"
-#include "engine/window.h"
-#include "engine/world.h"
+#include "core/engine.h"
+#include "core/game_object.h"
+#include "core/time_keeper.h"
+#include "core/window.h"
+#include "core/world.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>

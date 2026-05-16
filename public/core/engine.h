@@ -6,8 +6,8 @@
 #ifndef ENGINE_ENGINE_H
 #define ENGINE_ENGINE_H
 
-#include "engine/window.h"
-#include "engine/subsystems/input/input_subsystem.h"
+#include "core/window.h"
+#include "core/subsystems/input/input_subsystem.h"
 
 #include <memory>
 #include <string_view>

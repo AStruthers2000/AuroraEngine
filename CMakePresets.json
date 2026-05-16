@@ -1,0 +1,59 @@
+{
+    "version": 6,
+    "configurePresets": [
+        {
+            "name": "conan-base",
+            "description": "Base settings inherited by Conan-generated presets",
+            "hidden": true,
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "installDir": "${sourceDir}/build/${presetName}"
+        },
+        {
+            "name": "debug",
+            "displayName": "Debug",
+            "inherits": "conan-base",
+            "toolchainFile": "${sourceDir}/build/debug/generators/conan_toolchain.cmake",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+            }
+        },
+        {
+            "name": "release",
+            "displayName": "Release",
+            "inherits": "conan-base",
+            "toolchainFile": "${sourceDir}/build/release/generators/conan_toolchain.cmake",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "engine-debug",
+            "displayName": "Build Engine (Debug)",
+            "configurePreset": "debug",
+            "targets": ["AuroraEngine"]
+        },
+        {
+            "name": "engine-release",
+            "displayName": "Build Engine (Release)",
+            "configurePreset": "release",
+            "targets": ["AuroraEngine"]
+        },
+        {
+            "name": "game-debug",
+            "displayName": "Build Test Game (Debug)",
+            "configurePreset": "debug",
+            "targets": ["AuroraEngineTest"]
+        },
+        {
+            "name": "game-release",
+            "displayName": "Build Test Game (Release)",
+            "configurePreset": "release",
+            "targets": ["AuroraEngineTest"]
+        }
+    ]
+}

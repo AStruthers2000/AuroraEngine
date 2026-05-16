@@ -6,8 +6,8 @@
 #ifndef ENGINE_GAME_OBJECT_H
 #define ENGINE_GAME_OBJECT_H
 
-#include "engine/world.h"
-#include "engine/components/transform_component.h"
+#include "core/world.h"
+#include "core/components/transform_component.h"
 
 #include <SDL3/SDL.h>
 

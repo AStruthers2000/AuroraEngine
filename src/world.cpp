@@ -1,7 +1,7 @@
-#include "engine/world.h"
+#include "core/world.h"
 
-#include "engine/engine.h"
-#include "engine/game_object.h"
+#include "core/engine.h"
+#include "core/game_object.h"
 
 #include <algorithm>
 

@@ -6,7 +6,7 @@
 #ifndef ENGINE_COMPONENTS_TRANSFORM_COMPONENT_H
 #define ENGINE_COMPONENTS_TRANSFORM_COMPONENT_H
 
-#include "engine/components/component.h"
+#include "core/components/component.h"
 
 #include <glm/glm.hpp>
 

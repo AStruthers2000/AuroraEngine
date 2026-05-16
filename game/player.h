@@ -6,7 +6,7 @@
 #ifndef GAME_PLAYER_H
 #define GAME_PLAYER_H
 
-//#include "engine/game_object.h"
+//#include "core/game_object.h"
 #include "aurora_engine_public.h"
 
 namespace TestGame

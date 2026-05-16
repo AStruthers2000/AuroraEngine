@@ -4,15 +4,15 @@ project(AuroraEngine LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Option to build test executable (disabled during Conan packaging)
-option(BUILD_TESTING "Build test executable" ON)
+# Option to build test game (disabled during Conan packaging)
+option(BUILD_TESTING "Build test game executable" ON)
 
 # Find external dependencies
 find_package(glm CONFIG REQUIRED)
 find_package(SDL3 CONFIG REQUIRED)
 find_package(SDL3_image CONFIG REQUIRED)
 
-# Library
+# Engine library
 add_library(AuroraEngine
     ${PROJECT_SOURCE_DIR}/src/engine.cpp
     ${PROJECT_SOURCE_DIR}/src/game_object.cpp
@@ -22,7 +22,7 @@ add_library(AuroraEngine
     ${PROJECT_SOURCE_DIR}/src/subsystems/input_subsystem.cpp
 )
 
-# Include directories
+# Include directories for the engine
 target_include_directories(AuroraEngine
     PUBLIC
         ${PROJECT_SOURCE_DIR}/public
@@ -38,22 +38,7 @@ target_link_libraries(AuroraEngine
         SDL3_image::SDL3_image
 )
 
-# Test executable (only built during local development)
+# Test game executable (only built during local development)
 if(BUILD_TESTING)
-    add_executable(AuroraEngineTest
-        ${PROJECT_SOURCE_DIR}/game/main.cpp
-        ${PROJECT_SOURCE_DIR}/game/player.cpp
-    )
-
-    # Include game directory for player.h
-    target_include_directories(AuroraEngineTest
-        PRIVATE
-            ${PROJECT_SOURCE_DIR}/game
-    )
-
-    # Link to AuroraEngine library
-    target_link_libraries(AuroraEngineTest
-        PRIVATE
-            AuroraEngine
-    )
+    add_subdirectory(game)
 endif()

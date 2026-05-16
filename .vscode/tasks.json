@@ -1,0 +1,176 @@
+{
+    "version": "2.0.0",
+    "windows": {
+        "options": {
+            "shell": {
+                "executable": "cmd.exe",
+                "args": ["/d", "/c", "\"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\Tools\\VsDevCmd.bat\" -arch=x64 -host_arch=x64 &&"]
+            }
+        }
+    },
+    "tasks": [
+        {
+            "label": "Conan: Install (Debug)",
+            "type": "shell",
+            "command": "conan",
+            "args": [
+                "install", ".",
+                "--output-folder=build/debug",
+                "--build=missing",
+                "-s", "build_type=Debug",
+                "-c", "tools.cmake.cmaketoolchain:generator=Ninja"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "clear": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Conan: Install (Release)",
+            "type": "shell",
+            "command": "conan",
+            "args": [
+                "install", ".",
+                "--output-folder=build/release",
+                "--build=missing",
+                "-s", "build_type=Release",
+                "-c", "tools.cmake.cmaketoolchain:generator=Ninja"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "clear": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "CMake: Configure (Debug)",
+            "type": "shell",
+            "command": "cmake",
+            "args": ["--preset", "debug"],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "build",
+            "dependsOn": "Conan: Install (Debug)",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": ["$gcc"]
+        },
+        {
+            "label": "CMake: Configure (Release)",
+            "type": "shell",
+            "command": "cmake",
+            "args": ["--preset", "release"],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "build",
+            "dependsOn": "Conan: Install (Release)",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": ["$gcc"]
+        },
+        {
+            "label": "Build: Engine (Debug)",
+            "type": "shell",
+            "command": "cmake",
+            "args": ["--build", "--preset", "engine-debug"],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "build",
+            "dependsOn": "CMake: Configure (Debug)",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "clear": true
+            },
+            "problemMatcher": ["$gcc"]
+        },
+        {
+            "label": "Build: Engine (Release)",
+            "type": "shell",
+            "command": "cmake",
+            "args": ["--build", "--preset", "engine-release"],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "build",
+            "dependsOn": "CMake: Configure (Release)",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "clear": true
+            },
+            "problemMatcher": ["$gcc"]
+        },
+        {
+            "label": "Build: Test Game (Debug)",
+            "type": "shell",
+            "command": "cmake",
+            "args": ["--build", "--preset", "game-debug"],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "dependsOn": "CMake: Configure (Debug)",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "clear": true
+            },
+            "problemMatcher": ["$gcc"]
+        },
+        {
+            "label": "Build: Test Game (Release)",
+            "type": "shell",
+            "command": "cmake",
+            "args": ["--build", "--preset", "game-release"],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "build",
+            "dependsOn": "CMake: Configure (Release)",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "clear": true
+            },
+            "problemMatcher": ["$gcc"]
+        },
+        {
+            "label": "Conan: Package Engine",
+            "type": "shell",
+            "command": "conan",
+            "args": ["create", ".", "--build=missing"],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "clear": true
+            },
+            "problemMatcher": []
+        }
+    ]
+}

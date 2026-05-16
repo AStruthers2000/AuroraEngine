@@ -1,7 +1,7 @@
-#include "engine/engine.h"
+#include "core/engine.h"
 
-#include "engine/time_keeper.h"
-#include "engine/world.h"
+#include "core/time_keeper.h"
+#include "core/world.h"
 
 namespace AuroraEngine
 {

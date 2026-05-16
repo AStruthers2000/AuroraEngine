@@ -1,5 +1,5 @@
-#include "engine/subsystems/input/input_subsystem.h"
-#include "engine/engine.h"
+#include "core/subsystems/input/input_subsystem.h"
+#include "core/engine.h"
 
 namespace AuroraEngine
 {

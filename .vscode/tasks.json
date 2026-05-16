@@ -3,8 +3,14 @@
     "tasks": [
         {
             "label": "Conan: Install (Debug)",
-            "type": "shell",
-            "command": "conan install . --output-folder=build/debug --build=missing -s build_type=Debug",
+            "type": "process",
+            "command": "conan",
+            "args": [
+                "install", ".",
+                "--output-folder=build/debug",
+                "--build=missing",
+                "-s", "build_type=Debug"
+            ],
             "group": "build",
             "presentation": {
                 "reveal": "always",
@@ -15,8 +21,14 @@
         },
         {
             "label": "Conan: Install (Release)",
-            "type": "shell",
-            "command": "conan install . --output-folder=build/release --build=missing -s build_type=Release",
+            "type": "process",
+            "command": "conan",
+            "args": [
+                "install", ".",
+                "--output-folder=build/release",
+                "--build=missing",
+                "-s", "build_type=Release"
+            ],
             "group": "build",
             "presentation": {
                 "reveal": "always",
@@ -27,8 +39,16 @@
         },
         {
             "label": "CMake: Configure (Debug)",
-            "type": "shell",
-            "command": "cmake -S . -B build/debug -G Ninja -DCMAKE_TOOLCHAIN_FILE=build/debug/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+            "type": "process",
+            "command": "cmake",
+            "args": [
+                "-S", ".",
+                "-B", "build/debug",
+                "-G", "Ninja",
+                "-DCMAKE_TOOLCHAIN_FILE=build/debug/generators/conan_toolchain.cmake",
+                "-DCMAKE_BUILD_TYPE=Debug",
+                "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+            ],
             "group": "build",
             "dependsOn": "Conan: Install (Debug)",
             "presentation": {
@@ -39,8 +59,16 @@
         },
         {
             "label": "CMake: Configure (Release)",
-            "type": "shell",
-            "command": "cmake -S . -B build/release -G Ninja -DCMAKE_TOOLCHAIN_FILE=build/release/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+            "type": "process",
+            "command": "cmake",
+            "args": [
+                "-S", ".",
+                "-B", "build/release",
+                "-G", "Ninja",
+                "-DCMAKE_TOOLCHAIN_FILE=build/release/generators/conan_toolchain.cmake",
+                "-DCMAKE_BUILD_TYPE=Release",
+                "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+            ],
             "group": "build",
             "dependsOn": "Conan: Install (Release)",
             "presentation": {
@@ -51,8 +79,9 @@
         },
         {
             "label": "Build: Engine (Debug)",
-            "type": "shell",
-            "command": "cmake --build build/debug --target AuroraEngine",
+            "type": "process",
+            "command": "cmake",
+            "args": ["--build", "build/debug", "--target", "AuroraEngine"],
             "group": "build",
             "dependsOn": "CMake: Configure (Debug)",
             "presentation": {
@@ -64,8 +93,9 @@
         },
         {
             "label": "Build: Engine (Release)",
-            "type": "shell",
-            "command": "cmake --build build/release --target AuroraEngine",
+            "type": "process",
+            "command": "cmake",
+            "args": ["--build", "build/release", "--target", "AuroraEngine"],
             "group": "build",
             "dependsOn": "CMake: Configure (Release)",
             "presentation": {
@@ -77,8 +107,9 @@
         },
         {
             "label": "Build: Test Game (Debug)",
-            "type": "shell",
-            "command": "cmake --build build/debug --target AuroraEngineTest",
+            "type": "process",
+            "command": "cmake",
+            "args": ["--build", "build/debug", "--target", "AuroraEngineTest"],
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -93,8 +124,9 @@
         },
         {
             "label": "Build: Test Game (Release)",
-            "type": "shell",
-            "command": "cmake --build build/release --target AuroraEngineTest",
+            "type": "process",
+            "command": "cmake",
+            "args": ["--build", "build/release", "--target", "AuroraEngineTest"],
             "group": "build",
             "dependsOn": "CMake: Configure (Release)",
             "presentation": {
@@ -106,8 +138,9 @@
         },
         {
             "label": "Conan: Package Engine",
-            "type": "shell",
-            "command": "conan create . --build=missing",
+            "type": "process",
+            "command": "conan",
+            "args": ["create", ".", "--build=missing"],
             "group": "build",
             "presentation": {
                 "reveal": "always",

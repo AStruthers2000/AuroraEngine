@@ -1,8 +1,11 @@
 {
     "cmake.configureOnOpen": false,
     "cmake.buildDirectory": "${workspaceFolder}/build/debug",
-    "cmake.configurePreset": "debug",
-    "cmake.buildPreset": "game-debug",
-    "cmake.useCMakePresets": "always",
+    "cmake.useCMakePresets": "never",
+    "cmake.configureSettings": {
+        "CMAKE_TOOLCHAIN_FILE": "${workspaceFolder}/build/debug/generators/conan_toolchain.cmake",
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+    },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
 }

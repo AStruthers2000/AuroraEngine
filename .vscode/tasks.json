@@ -28,7 +28,7 @@
         {
             "label": "CMake: Configure (Debug)",
             "type": "shell",
-            "command": "cmake --preset debug",
+            "command": "cmake -S . -B build/debug -G Ninja -DCMAKE_TOOLCHAIN_FILE=build/debug/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
             "group": "build",
             "dependsOn": "Conan: Install (Debug)",
             "presentation": {
@@ -40,7 +40,7 @@
         {
             "label": "CMake: Configure (Release)",
             "type": "shell",
-            "command": "cmake --preset release",
+            "command": "cmake -S . -B build/release -G Ninja -DCMAKE_TOOLCHAIN_FILE=build/release/generators/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
             "group": "build",
             "dependsOn": "Conan: Install (Release)",
             "presentation": {
@@ -52,7 +52,7 @@
         {
             "label": "Build: Engine (Debug)",
             "type": "shell",
-            "command": "cmake --build --preset engine-debug",
+            "command": "cmake --build build/debug --target AuroraEngine",
             "group": "build",
             "dependsOn": "CMake: Configure (Debug)",
             "presentation": {
@@ -65,7 +65,7 @@
         {
             "label": "Build: Engine (Release)",
             "type": "shell",
-            "command": "cmake --build --preset engine-release",
+            "command": "cmake --build build/release --target AuroraEngine",
             "group": "build",
             "dependsOn": "CMake: Configure (Release)",
             "presentation": {
@@ -78,7 +78,7 @@
         {
             "label": "Build: Test Game (Debug)",
             "type": "shell",
-            "command": "cmake --build --preset game-debug",
+            "command": "cmake --build build/debug --target AuroraEngineTest",
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -94,7 +94,7 @@
         {
             "label": "Build: Test Game (Release)",
             "type": "shell",
-            "command": "cmake --build --preset game-release",
+            "command": "cmake --build build/release --target AuroraEngineTest",
             "group": "build",
             "dependsOn": "CMake: Configure (Release)",
             "presentation": {

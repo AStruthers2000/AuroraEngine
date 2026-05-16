@@ -6,8 +6,8 @@
             "type": "process",
             "command": "conan",
             "args": [
-                "install", "${workspaceFolder}",
-                "--output-folder=${workspaceFolder}/build/debug",
+                "install", ".",
+                "--output-folder=build/debug",
                 "--build=missing",
                 "-s", "build_type=Debug"
             ],
@@ -27,8 +27,8 @@
             "type": "process",
             "command": "conan",
             "args": [
-                "install", "${workspaceFolder}",
-                "--output-folder=${workspaceFolder}/build/release",
+                "install", ".",
+                "--output-folder=build/release",
                 "--build=missing",
                 "-s", "build_type=Release"
             ],
@@ -47,14 +47,7 @@
             "label": "CMake: Configure (Debug)",
             "type": "process",
             "command": "cmake",
-            "args": [
-                "-S", "${workspaceFolder}",
-                "-B", "${workspaceFolder}/build/debug",
-                "-G", "Ninja",
-                "-DCMAKE_TOOLCHAIN_FILE=${workspaceFolder}/build/debug/generators/conan_toolchain.cmake",
-                "-DCMAKE_BUILD_TYPE=Debug",
-                "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
-            ],
+            "args": ["--preset", "debug"],
             "options": {
                 "cwd": "${workspaceFolder}"
             },
@@ -70,14 +63,7 @@
             "label": "CMake: Configure (Release)",
             "type": "process",
             "command": "cmake",
-            "args": [
-                "-S", "${workspaceFolder}",
-                "-B", "${workspaceFolder}/build/release",
-                "-G", "Ninja",
-                "-DCMAKE_TOOLCHAIN_FILE=${workspaceFolder}/build/release/generators/conan_toolchain.cmake",
-                "-DCMAKE_BUILD_TYPE=Release",
-                "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
-            ],
+            "args": ["--preset", "release"],
             "options": {
                 "cwd": "${workspaceFolder}"
             },
@@ -93,7 +79,7 @@
             "label": "Build: Engine (Debug)",
             "type": "process",
             "command": "cmake",
-            "args": ["--build", "${workspaceFolder}/build/debug", "--target", "AuroraEngine"],
+            "args": ["--build", "--preset", "engine-debug"],
             "options": {
                 "cwd": "${workspaceFolder}"
             },
@@ -110,7 +96,7 @@
             "label": "Build: Engine (Release)",
             "type": "process",
             "command": "cmake",
-            "args": ["--build", "${workspaceFolder}/build/release", "--target", "AuroraEngine"],
+            "args": ["--build", "--preset", "engine-release"],
             "options": {
                 "cwd": "${workspaceFolder}"
             },
@@ -127,7 +113,7 @@
             "label": "Build: Test Game (Debug)",
             "type": "process",
             "command": "cmake",
-            "args": ["--build", "${workspaceFolder}/build/debug", "--target", "AuroraEngineTest"],
+            "args": ["--build", "--preset", "game-debug"],
             "options": {
                 "cwd": "${workspaceFolder}"
             },
@@ -147,7 +133,7 @@
             "label": "Build: Test Game (Release)",
             "type": "process",
             "command": "cmake",
-            "args": ["--build", "${workspaceFolder}/build/release", "--target", "AuroraEngineTest"],
+            "args": ["--build", "--preset", "game-release"],
             "options": {
                 "cwd": "${workspaceFolder}"
             },
@@ -164,7 +150,7 @@
             "label": "Conan: Package Engine",
             "type": "process",
             "command": "conan",
-            "args": ["create", "${workspaceFolder}", "--build=missing"],
+            "args": ["create", ".", "--build=missing"],
             "options": {
                 "cwd": "${workspaceFolder}"
             },

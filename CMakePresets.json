@@ -5,15 +5,15 @@
             "name": "conan-base",
             "description": "Base settings inherited by Conan-generated presets",
             "hidden": true,
-            "generator": "Ninja",
-            "binaryDir": "${sourceDir}/build/${presetName}",
-            "installDir": "${sourceDir}/build/${presetName}"
+            "generator": "Ninja"
         },
         {
             "name": "debug",
             "displayName": "Debug",
             "inherits": "conan-base",
-            "toolchainFile": "${sourceDir}/build/debug/generators/conan_toolchain.cmake",
+            "binaryDir": "${sourceDir}/build/debug/build/Debug",
+            "installDir": "${sourceDir}/build/debug/build/Debug",
+            "toolchainFile": "${sourceDir}/build/debug/build/Debug/generators/conan_toolchain.cmake",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
@@ -23,7 +23,9 @@
             "name": "release",
             "displayName": "Release",
             "inherits": "conan-base",
-            "toolchainFile": "${sourceDir}/build/release/generators/conan_toolchain.cmake",
+            "binaryDir": "${sourceDir}/build/release/build/Release",
+            "installDir": "${sourceDir}/build/release/build/Release",
+            "toolchainFile": "${sourceDir}/build/release/build/Release/generators/conan_toolchain.cmake",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"

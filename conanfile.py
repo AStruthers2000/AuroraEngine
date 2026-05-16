@@ -26,7 +26,6 @@ class AuroraEngineConan(ConanFile):
         # Force static linking for all dependencies
         self.options["sdl"].shared = False
         self.options["sdl_image"].shared = False
-        self.options["catch2"].shared = False
 
     def layout(self):
         cmake_layout(self)

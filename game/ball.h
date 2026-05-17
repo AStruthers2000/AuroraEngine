@@ -4,40 +4,43 @@
 ///
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef PONG_PLAYER_H
-#define PONG_PLAYER_H
+#ifndef PONG_BALL_H
+#define PONG_BALL_H
+
+#include <utility>
 
 #include "better_game_object.h"
+#include "player.h"
 
-class WallManager;
-
-class Player : public BetterGameObject
+class Ball : public BetterGameObject, public std::enable_shared_from_this<Ball>
 {
 public:
-    Player(AuroraEngine::GameWorld& owning_world, AuroraEngine::TransformComponent const& initial_transform, GameMode& owning_mode, SDL_Color const& color, /*WallManager& wall_manager, */int player_num)
+    Ball(AuroraEngine::GameWorld& owning_world, AuroraEngine::TransformComponent const& initial_transform, GameMode& owning_mode, float radius, SDL_Color const& color)
         : BetterGameObject(owning_world, initial_transform, owning_mode, true)
+        , m_spawn_transform(initial_transform)
         , m_color(color)
-        , m_player_num(player_num)
     {
+        get_transform().set_scale(glm::vec2{radius * 2.f, radius * 2.f});
     }
 
-    ~Player() override = default;
+    ~Ball() override = default;
 
     void initialize() override;
     void update(float delta_time) override;
     void render(SDL_Renderer* renderer) override;
     void cleanup() override;
-    float get_elasticity() const { return m_elasticity; }
 
 private:
     SDL_Color m_color;
-    glm::vec2 m_move_vec{0, 0};
-    float m_acceleration_speed = 1000.f;
-    float m_max_acceleration = 10000.f;
-    float m_max_speed = 6000.f;
-    float m_drag = 0.25f;
-    float m_elasticity = 1.15f;
-    int m_player_num = 0;
+
+    AuroraEngine::TransformComponent m_spawn_transform;
+
+    float m_min_speed = 100.f;
+    float m_max_speed = 50000.f;
+
+    void clamp_velocity();
+    static glm::vec2 random_vector() ;
 };
 
-#endif //PONG_PLAYER_H
+
+#endif //PONG_BALL_H

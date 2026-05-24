@@ -1,6 +1,6 @@
 #include "core/window.h"
 
-namespace AuroraEngine
+namespace Core
 {
 Window::Window(WindowSpecification const &spec)
         : m_specification(spec)
@@ -60,4 +60,4 @@ void Window::destroy()
     }
 }
 
-} // namespace AuroraEngine
+} // namespace Core

@@ -11,7 +11,7 @@
 
 #include <string_view>
 
-namespace AuroraEngine
+namespace Core
 {
 
 struct WindowSpecification
@@ -46,6 +46,6 @@ private:
     SDL_Renderer* m_sdl_renderer = nullptr;
 };
 
-} // namespace AuroraEngine
+} // namespace Core
 
 #endif // ENGINE_WINDOW_H

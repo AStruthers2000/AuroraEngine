@@ -6,15 +6,15 @@ void Player::initialize()
 {
     SDL_Scancode up = m_player_num == 1 ? SDL_Scancode::SDL_SCANCODE_W : SDL_Scancode::SDL_SCANCODE_UP;
     SDL_Scancode down = m_player_num == 1 ? SDL_Scancode::SDL_SCANCODE_S : SDL_Scancode::SDL_SCANCODE_DOWN;
-    AuroraEngine::Engine::get().get_input_subsystem().register_callback(
-            AuroraEngine::InputAxis(AuroraEngine::InputAxis::Axis{SDL_Scancode::SDL_SCANCODE_UNKNOWN,
+    Core::Engine::get().get_input_subsystem().register_callback(
+            Core::InputAxis(Core::InputAxis::Axis{SDL_Scancode::SDL_SCANCODE_UNKNOWN,
                                                                   SDL_Scancode::SDL_SCANCODE_UNKNOWN},
-                                    AuroraEngine::InputAxis::Axis{up, down}),
-            [this](AuroraEngine::AxisState const &axis) {
+                                    Core::InputAxis::Axis{up, down}),
+            [this](Core::AxisState const &axis) {
                 get_transform().set_acceleration(axis.get_normalized_screen_direction() * m_acceleration_speed);
             });
 
-    register_collision_response([this](AuroraEngine::TransformComponent const& my_transform, BetterGameObject* other_object, ECollisionDirection direction)
+    register_collision_response([this](Core::TransformComponent const& my_transform, BetterGameObject* other_object, ECollisionDirection direction)
     {
         if (dynamic_cast<Ball*>(other_object))
         {

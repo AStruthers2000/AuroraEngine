@@ -6,27 +6,45 @@
 #ifndef ENGINE_COMPONENTS_TRANSFORM_COMPONENT_H
 #define ENGINE_COMPONENTS_TRANSFORM_COMPONENT_H
 
-#include "core/components/component.h"
+#include "core/component.h"
 
 #include <glm/glm.hpp>
 
-namespace AuroraEngine
+namespace Core
 {
 
 class TransformComponent : public Component
 {
 public:
-    TransformComponent() = default;
-    TransformComponent(const glm::vec2& position,
+    explicit TransformComponent(Entity& owning_entity)
+      : Component(owning_entity)
+    {
+    }
+    TransformComponent(Entity& owning_entity, const glm::vec2& position)
+      : Component(owning_entity)
+      , m_position(position)
+    {
+    }
+    TransformComponent(Entity& owning_entity,
+                       const glm::vec2& position,
+                       const glm::vec2& scale)
+      : Component(owning_entity)
+      , m_position(position)
+      , m_scale(scale)
+    {
+    }
+    TransformComponent(Entity& owning_entity,
+                       const glm::vec2& position,
                        const glm::vec2& velocity = glm::vec2(0.0f, 0.0f),
                        const glm::vec2& acceleration = glm::vec2(0.0f, 0.0f),
-                       float rotation = 0.0f,
+                    //    float rotation = 0.0f,
                        const glm::vec2& scale = glm::vec2(1.0f, 1.0f))
-        : m_position(position),
-          m_velocity(velocity),
-          m_acceleration(acceleration),
-          m_rotation(rotation),
-          m_scale(scale)
+        : Component(owning_entity)
+        , m_position(position)
+        , m_velocity(velocity)
+        , m_acceleration(acceleration)
+        //   m_rotation(rotation),
+        ,  m_scale(scale)
     {
     }
 
@@ -44,9 +62,9 @@ public:
     void set_acceleration(const glm::vec2& acceleration) { m_acceleration = acceleration; }
     void update_acceleration(const glm::vec2& delta) { m_acceleration += delta; }
 
-    float get_rotation() const { return m_rotation; }
-    void set_rotation(float rotation) { m_rotation = rotation; }
-    void update_rotation(float delta) { m_rotation += delta; }
+    // float get_rotation() const { return m_rotation; }
+    // void set_rotation(float rotation) { m_rotation = rotation; }
+    // void update_rotation(float delta) { m_rotation += delta; }
 
     const glm::vec2& get_scale() const { return m_scale; }
     void set_scale(const glm::vec2& scale) { m_scale = scale; }
@@ -56,10 +74,10 @@ private:
     glm::vec2 m_position{0.0f, 0.0f};
     glm::vec2 m_velocity{0.0f, 0.0f};
     glm::vec2 m_acceleration{0.0f, 0.0f};
-    float m_rotation = 0.0f;
+    // float m_rotation = 0.0f;
     glm::vec2 m_scale{1.0f, 1.0f};
 };
 
-} // namespace AuroraEngine
+} // namespace Core
 
 #endif // ENGINE_COMPONENTS_TRANSFORM_COMPONENT_H

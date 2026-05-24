@@ -14,7 +14,7 @@ class WallManager;
 class Player : public BetterGameObject
 {
 public:
-    Player(AuroraEngine::GameWorld& owning_world, AuroraEngine::TransformComponent const& initial_transform, GameMode& owning_mode, SDL_Color const& color, /*WallManager& wall_manager, */int player_num)
+    Player(Core::GameWorld& owning_world, Core::TransformComponent const& initial_transform, GameMode& owning_mode, SDL_Color const& color, /*WallManager& wall_manager, */int player_num)
         : BetterGameObject(owning_world, initial_transform, owning_mode, true)
         , m_color(color)
         , m_player_num(player_num)

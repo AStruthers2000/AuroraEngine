@@ -14,12 +14,10 @@ find_package(SDL3_image CONFIG REQUIRED)
 
 # Engine library
 add_library(AuroraEngine
+    ${PROJECT_SOURCE_DIR}/src/component.cpp
     ${PROJECT_SOURCE_DIR}/src/engine.cpp
-    ${PROJECT_SOURCE_DIR}/src/game_object.cpp
-    ${PROJECT_SOURCE_DIR}/src/window.cpp
-    ${PROJECT_SOURCE_DIR}/src/world.cpp
-
-    ${PROJECT_SOURCE_DIR}/src/subsystems/input_subsystem.cpp
+    ${PROJECT_SOURCE_DIR}/src/entity.cpp
+    ${PROJECT_SOURCE_DIR}/src/game_world.cpp
 )
 
 # Include directories for the engine

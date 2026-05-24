@@ -1,6 +1,6 @@
 #include "core/animation.h"
 
-namespace AuroraEngine
+namespace Core
 {
 
 float Animation::get_length() const
@@ -19,4 +19,4 @@ void Animation::update(float delta_time)
     m_frame_timer.update(delta_time);
 }
 
-} // namespace AuroraEngine
+} // namespace Core

@@ -27,7 +27,7 @@ constexpr float SEC_FACTOR      = TIME_UNITS == ETimeType::Nanoseconds ? NANOSEC
 
 } // anonymous namespace
 
-namespace AuroraEngine
+namespace Core
 {
 
 /// @brief Returns the current time in the units specified by the TIME_UNITS constant.
@@ -86,6 +86,6 @@ static float time_delta(std::uint64_t const start_time, std::uint64_t const end_
     return keep_sign ? delta_seconds : std::abs(delta_seconds);
 }
 
-} // namespace AuroraEngine
+} // namespace Core
 
 #endif // ENGINE_TIME_KEEPER_H

@@ -15,7 +15,7 @@
 class Ball : public BetterGameObject, public std::enable_shared_from_this<Ball>
 {
 public:
-    Ball(AuroraEngine::GameWorld& owning_world, AuroraEngine::TransformComponent const& initial_transform, GameMode& owning_mode, float radius, SDL_Color const& color)
+    Ball(Core::GameWorld& owning_world, Core::TransformComponent const& initial_transform, GameMode& owning_mode, float radius, SDL_Color const& color)
         : BetterGameObject(owning_world, initial_transform, owning_mode, true)
         , m_spawn_transform(initial_transform)
         , m_color(color)
@@ -33,7 +33,7 @@ public:
 private:
     SDL_Color m_color;
 
-    AuroraEngine::TransformComponent m_spawn_transform;
+    Core::TransformComponent m_spawn_transform;
 
     float m_min_speed = 100.f;
     float m_max_speed = 50000.f;

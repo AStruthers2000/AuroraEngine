@@ -15,7 +15,7 @@
 #include <variant>
 #include <vector>
 
-namespace AuroraEngine
+namespace Core
 {
 
 using InputCallback_Action = std::function<void()>;
@@ -74,6 +74,6 @@ private:
     bool m_recalculate_cache = false;
 };
 
-} // namespace AuroraEngine
+} // namespace Core
 
 #endif //ENGINE_SUBSYSTEMS_INPUT_SUBSYSTEM_H

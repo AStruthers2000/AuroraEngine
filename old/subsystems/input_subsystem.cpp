@@ -1,7 +1,7 @@
 #include "core/subsystems/input/input_subsystem.h"
 #include "core/engine.h"
 
-namespace AuroraEngine
+namespace Core
 {
 
 //--------------------------------------------------------------------------------------------------
@@ -212,4 +212,4 @@ bool InputSubsystem::test()
     return true;
 }
 
-} // namespace AuroraEngine
+} // namespace Core

@@ -11,10 +11,10 @@
 #include "collider.h"
 
 class GameMode;
-class BetterGameObject : public AuroraEngine::GameObject
+class BetterGameObject : public Core::GameObject
 {
 public:
-    BetterGameObject(AuroraEngine::GameWorld& owning_world, AuroraEngine::TransformComponent const& initial_transform, GameMode& owning_mode, bool is_dynamic_object = false)
+    BetterGameObject(Core::GameWorld& owning_world, Core::TransformComponent const& initial_transform, GameMode& owning_mode, bool is_dynamic_object = false)
         : GameObject(owning_world, initial_transform)
         , m_game_mode(owning_mode)
         , m_collider(std::make_unique<Collider>(this, is_dynamic_object))
@@ -43,7 +43,7 @@ public:
         return m_collider->is_dynamic();
     }
 
-    void collision_response(AuroraEngine::TransformComponent const& my_transform, BetterGameObject* other_object, ECollisionDirection direction)
+    void collision_response(Core::TransformComponent const& my_transform, BetterGameObject* other_object, ECollisionDirection direction)
     {
         m_collider->collision_response(my_transform, other_object, direction);
     }

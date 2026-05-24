@@ -44,10 +44,10 @@ struct OverlapSpecification
     int update_order;
 };
 
-class GameMode : public AuroraEngine::GameObject
+class GameMode : public Core::GameObject
 {
 public:
-    GameMode(AuroraEngine::GameWorld& owning_world, AuroraEngine::TransformComponent const& initial_transform)
+    GameMode(Core::GameWorld& owning_world, Core::TransformComponent const& initial_transform)
     : GameObject(owning_world, initial_transform)
     {
     }

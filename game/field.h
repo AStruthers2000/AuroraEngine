@@ -11,11 +11,11 @@
 
 #include <string>
 
-class Field : public AuroraEngine::GameObject
+class Field : public Core::GameObject
 {
 public:
-    Field(AuroraEngine::GameWorld& owning_world,
-          AuroraEngine::TransformComponent const& initial_transform,
+    Field(Core::GameWorld& owning_world,
+          Core::TransformComponent const& initial_transform,
           glm::vec2 const& size,
           std::string texture_path)
         : GameObject(owning_world, initial_transform)

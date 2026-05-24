@@ -22,7 +22,7 @@ enum class ECollisionDirection
 
 class BetterGameObject;
 
-using CollisionCallback = std::function<void(AuroraEngine::TransformComponent const&, BetterGameObject*, ECollisionDirection)>;
+using CollisionCallback = std::function<void(Core::TransformComponent const&, BetterGameObject*, ECollisionDirection)>;
 
 class Collider
 {
@@ -37,7 +37,7 @@ public:
     {
     }
 
-    Collider(AuroraEngine::GameObject* owner, bool is_dynamic)
+    Collider(Core::GameObject* owner, bool is_dynamic)
         : m_owner(owner)
         , m_is_dynamic(is_dynamic)
     {
@@ -59,7 +59,7 @@ public:
         return extents;
     }
 
-    AuroraEngine::GameObject* get_owner() const { return m_owner; }
+    Core::GameObject* get_owner() const { return m_owner; }
 
     bool is_dynamic() const { return m_is_dynamic; }
 
@@ -68,7 +68,7 @@ public:
         m_custom_collision_response = std::move(collision_response);
     }
 
-    void collision_response(AuroraEngine::TransformComponent const& my_transform, BetterGameObject* other_object, ECollisionDirection direction)
+    void collision_response(Core::TransformComponent const& my_transform, BetterGameObject* other_object, ECollisionDirection direction)
     {
         if (m_custom_collision_response)
         {
@@ -77,7 +77,7 @@ public:
     }
 
 private:
-    AuroraEngine::GameObject* m_owner;
+    Core::GameObject* m_owner;
     bool m_is_dynamic{ false };
     CollisionCallback m_custom_collision_response{ nullptr };
 };

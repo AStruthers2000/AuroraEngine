@@ -1,16 +1,32 @@
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Copyright (C) 2026 AStruthers2000 - All Rights Reserved
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #include "core/engine.h"
 
-#include "core/time_keeper.h"
-#include "core/world.h"
+// #include "core/time_keeper.h"
+#include "core/game_world.h"
 
-namespace AuroraEngine
+namespace Core
 {
 
 static Engine* s_engine = nullptr;
 
-//--------------------------------------------------------------------------------------------------
-Engine::Engine(WindowSpecification const& window_spec)
-    : m_window(std::make_unique<Window>(window_spec))
+// //--------------------------------------------------------------------------------------------------
+// Engine::Engine(WindowSpecification const& window_spec)
+//     : m_window(std::make_unique<Window>(window_spec))
+// {
+//     // if (!SDL_Init(SDL_INIT_VIDEO))
+//     // {
+//     //     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+//     //                              "Error",
+//     //                              "Failed to initialize SDL3!",
+//     //                              nullptr);
+//     //     std::exit(-1);
+//     // }
+//     s_engine = this;
+// }
+
+Engine::Engine()
 {
     if (!SDL_Init(SDL_INIT_VIDEO))
     {
@@ -18,8 +34,8 @@ Engine::Engine(WindowSpecification const& window_spec)
                                  "Error",
                                  "Failed to initialize SDL3!",
                                  nullptr);
+        std::exit(-1);
     }
-
     s_engine = this;
 }
 
@@ -29,8 +45,8 @@ Engine::~Engine()
     m_managed_world->cleanup();
     m_managed_world.reset();
 
-    m_window->destroy();
-    m_window.reset();
+    // m_window->destroy();
+    // m_window.reset();
 
     // Quit SDL
     SDL_Quit();
@@ -48,7 +64,7 @@ void Engine::initialize(std::unique_ptr<GameWorld> managed_world)
         return;
     }
 
-    m_window->create();
+    // m_window->create();
 
     // Take ownership of world and initialize it with the SDL state
     m_managed_world = std::move(managed_world);
@@ -73,46 +89,49 @@ void Engine::run()
     bool running = true;
 
     // Using a variable time step method
-//    auto target_frame_time = static_cast<std::uint64_t>((1.f / 144.f) * 1E+9);
-    std::uint64_t previous_frame_time = get_current_time();
+    // auto target_frame_time = static_cast<std::uint64_t>((1.f / 144.f) * 1E+9);
+    // std::uint64_t previous_frame_time = get_current_time();
+    std::uint64_t previous_frame_time = SDL_GetTicksNS();
     while (running)
     {
-        std::uint64_t frame_start_time = get_current_time();
-        // float delta_time = static_cast<float>(frame_start_time - previous_frame_time) / 1E+09;
-        float delta_time = time_delta<TIME_UNITS>(previous_frame_time, frame_start_time);
+        // std::uint64_t frame_start_time = get_current_time();
+        std::uint64_t frame_start_time = SDL_GetTicksNS();
+        float delta_time = static_cast<float>(frame_start_time - previous_frame_time) / 1E+09;
+        // float delta_time = time_delta<TIME_UNITS>(previous_frame_time, frame_start_time);
 
         running = process_input();
         update(delta_time);
         render();
 
-//        std::uint64_t frame_end_time = get_current_time();
-//        // // float frame_time = static_cast<float>(frame_end_time - frame_start_time) / 1'000.f;
-//        float frame_time = time_delta<TIME_UNITS>(frame_start_time, frame_end_time);
-//        float frame_sleep_time = static_cast<float>(target_frame_time) - frame_time;
-//        auto frame_sleep_ns = static_cast<std::int64_t>(frame_sleep_time);
-//        if (frame_sleep_ns > 0)
-//        {
-//            SDL_DelayPrecise(frame_sleep_ns);
-//        }
-//        else
-//        {
-//            printf("Frame longer than target\n");
-//        }
+        // std::uint64_t frame_end_time = get_current_time();
+        // // // float frame_time = static_cast<float>(frame_end_time - frame_start_time) / 1'000.f;
+        // float frame_time = time_delta<TIME_UNITS>(frame_start_time, frame_end_time);
+        // float frame_sleep_time = static_cast<float>(target_frame_time) - frame_time;
+        // auto frame_sleep_ns = static_cast<std::int64_t>(frame_sleep_time);
+        // if (frame_sleep_ns > 0)
+        // {
+        //     SDL_DelayPrecise(frame_sleep_ns);
+        // }
+        // else
+        // {
+        //     printf("Frame longer than target\n");
+        // }
 
         previous_frame_time = frame_start_time;
     }
 }
 
-Engine &Engine::get()
-{
-    assert(s_engine);
-    return *s_engine;
-}
+// Engine &Engine::get()
+// {
+//     assert(s_engine);
+//     return *s_engine;
+// }
 
 //--------------------------------------------------------------------------------------------------
 bool Engine::process_input()
 {
-    return m_input_subsystem.test();
+    // return m_input_subsystem.test();
+    return true;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -125,8 +144,9 @@ void Engine::update(float delta_time)
 void Engine::render()
 {
     // Eventually refactor this to have the window handle rendering entirely
-    SDL_Renderer* renderer = m_window->get_sdl_renderer();
-    SDL_SetRenderDrawColor(renderer, 20, 10, 30, 255);
+    // SDL_Renderer* renderer = m_window->get_sdl_renderer();
+    SDL_Renderer* renderer = nullptr;
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
 
     // Perform all rendering
@@ -136,4 +156,4 @@ void Engine::render()
     SDL_RenderPresent(renderer);
 }
 
-} // namespace AuroraEngine
+} // namespace Core

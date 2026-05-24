@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 
-namespace AuroraEngine
+namespace Core
 {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -368,6 +368,6 @@ private:
     bool m_all_zeros_last_frame = true;
 };
 
-} // namespace AuroraEngine
+} // namespace Core
 
 #endif // ENGINE_INPUT_TYPES_H

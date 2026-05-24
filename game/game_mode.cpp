@@ -5,8 +5,8 @@
 
 void GameMode::initialize()
 {
-    AuroraEngine::Engine::get().get_input_subsystem().register_callback(
-        AuroraEngine::InputAction(SDL_Scancode::SDL_SCANCODE_F12, true),
+    Core::Engine::get().get_input_subsystem().register_callback(
+        Core::InputAction(SDL_Scancode::SDL_SCANCODE_F12, true),
         [this]()
         {
             this->m_debug_mode = !this->m_debug_mode;
@@ -15,7 +15,7 @@ void GameMode::initialize()
 
 void GameMode::update(float delta_time)
 {
-    float delta_to_last_spawn = AuroraEngine::time_delta<TIME_UNITS>(m_last_scored_time);
+    float delta_to_last_spawn = Core::time_delta<TIME_UNITS>(m_last_scored_time);
     if (delta_to_last_spawn > SPAWN_BALL_WAIT_TIME)
     {
         spawn_ball(m_last_spawned_ball_specs);
@@ -84,7 +84,7 @@ void GameMode::spawn_player(PlayerSpecification const& player_spec)
 
 void GameMode::spawn_ball(BallSpecification const& ball_spec)
 {
-    AuroraEngine::TransformComponent spawn_location{ ball_spec.position };
+    Core::TransformComponent spawn_location{ ball_spec.position };
     spawn_location.update_position(glm::vec2(-ball_spec.radius, -ball_spec.radius));
 
     std::shared_ptr<Ball> ball = std::make_unique<Ball>(get_world(), spawn_location, *this, ball_spec.radius, ball_spec.color);
@@ -96,14 +96,14 @@ void GameMode::spawn_ball(BallSpecification const& ball_spec)
 
 void GameMode::spawn_wall(const WallSpecification &wall_spec)
 {
-    std::shared_ptr<Wall> wall = std::make_shared<Wall>(get_world(), AuroraEngine::TransformComponent(wall_spec.position), *this, wall_spec.scale, wall_spec.color, wall_spec.elasticity);
+    std::shared_ptr<Wall> wall = std::make_shared<Wall>(get_world(), Core::TransformComponent(wall_spec.position), *this, wall_spec.scale, wall_spec.color, wall_spec.elasticity);
     m_managed_objects.push_back(wall);
     get_world().add_object(std::move(wall), wall_spec.update_order);
 }
 
 void GameMode::spawn_overlap(const OverlapSpecification &overlap_spec)
 {
-    std::shared_ptr<OverlapVolume> overlap = std::make_unique<OverlapVolume>(get_world(), AuroraEngine::TransformComponent(overlap_spec.position), *this, overlap_spec.overlap_position);
+    std::shared_ptr<OverlapVolume> overlap = std::make_unique<OverlapVolume>(get_world(), Core::TransformComponent(overlap_spec.position), *this, overlap_spec.overlap_position);
     overlap->get_transform().set_scale(overlap_spec.scale);
     m_overlap_volumes.push_back(overlap);
     get_world().add_object(std::move(overlap), overlap_spec.update_order);
@@ -151,7 +151,7 @@ void GameMode::resolve_all_collision()
 
 void GameMode::resolve_collision(BetterGameObject* dynamic, BetterGameObject* other, SDL_FRect const& overlap)
 {
-    AuroraEngine::TransformComponent dynamic_transform = dynamic->get_transform();
+    Core::TransformComponent dynamic_transform = dynamic->get_transform();
     glm::vec2 dynamic_pos = dynamic->get_transform().get_position();
     glm::vec2 dynamic_size = dynamic->get_transform().get_scale();
     glm::vec2 dynamic_center = dynamic_pos + dynamic_size * 0.5f;
@@ -216,6 +216,6 @@ void GameMode::score_goal(int player_that_scored)
 
     if (player_scored)
     {
-        m_last_scored_time = AuroraEngine::get_current_time();
+        m_last_scored_time = Core::get_current_time();
     }
 }

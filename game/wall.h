@@ -12,7 +12,7 @@
 class Wall : public BetterGameObject
 {
 public:
-    Wall(AuroraEngine::GameWorld& owning_world, AuroraEngine::TransformComponent const& initial_transform, GameMode& owning_mode, glm::vec2 const& scale, SDL_Color const& color, float elasticity = 1.f)
+    Wall(Core::GameWorld& owning_world, Core::TransformComponent const& initial_transform, GameMode& owning_mode, glm::vec2 const& scale, SDL_Color const& color, float elasticity = 1.f)
         : BetterGameObject(owning_world, initial_transform, owning_mode, false)
         , m_color(color)
         , m_elasticity(elasticity)

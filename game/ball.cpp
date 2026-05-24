@@ -9,8 +9,8 @@ void Ball::initialize()
 {
     get_transform().set_velocity(random_vector());
 
-    AuroraEngine::Engine::get().get_input_subsystem().register_callback(
-            AuroraEngine::InputAction(SDL_Scancode::SDL_SCANCODE_R, true),
+    Core::Engine::get().get_input_subsystem().register_callback(
+            Core::InputAction(SDL_Scancode::SDL_SCANCODE_R, true),
             [this]()
             {
                 get_transform().set_position(m_spawn_transform.get_position());
@@ -19,7 +19,7 @@ void Ball::initialize()
                 get_transform().set_velocity(random_vector());
             });
 
-    register_collision_response([this](AuroraEngine::TransformComponent const& my_transform, BetterGameObject* other_object, ECollisionDirection direction)
+    register_collision_response([this](Core::TransformComponent const& my_transform, BetterGameObject* other_object, ECollisionDirection direction)
     {
         enum class HitObject
         {

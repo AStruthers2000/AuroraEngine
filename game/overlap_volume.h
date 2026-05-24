@@ -17,7 +17,7 @@ class OverlapVolume;
 class GameMode;
 using OverlapCallback = std::function<void(OverlapVolume*)>;
 
-class OverlapVolume : public AuroraEngine::GameObject
+class OverlapVolume : public Core::GameObject
 {
 public:
     enum class EOverlapPosition
@@ -27,8 +27,8 @@ public:
         RightSide,
     };
 
-    OverlapVolume(AuroraEngine::GameWorld& owning_world,
-                  AuroraEngine::TransformComponent const& initial_transform,
+    OverlapVolume(Core::GameWorld& owning_world,
+                  Core::TransformComponent const& initial_transform,
                   GameMode& owning_mode,
                   EOverlapPosition overlap_side)
         : GameObject(owning_world, initial_transform)

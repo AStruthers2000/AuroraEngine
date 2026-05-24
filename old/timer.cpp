@@ -1,6 +1,6 @@
 #include "core/timer.h"
 
-namespace AuroraEngine
+namespace Core
 {
 
 void Timer::update(float delta_time)
@@ -19,4 +19,4 @@ void Timer::reset()
     m_timeout = false;
 }
 
-} // namespace AuroraEngine
+} // namespace Core

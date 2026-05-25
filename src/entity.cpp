@@ -1,6 +1,6 @@
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Copyright (C) 2026 AStruthers2000 - All Rights Reserved
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
 #include "core/entity.h"
 
 #include <print>
@@ -9,7 +9,7 @@ namespace Core
 {
 
 //--------------------------------------------------------------------------------------------------
-Entity::Entity(GameWorld& owning_world, std::uint8_t update_order)
+Entity::Entity(Layer& owning_world, std::uint8_t update_order)
     : m_world(owning_world)
     , m_transform(*this)
 {
@@ -39,15 +39,25 @@ void Entity::initialize_entity()
 //--------------------------------------------------------------------------------------------------
 void Entity::initialize_components()
 {
-    for (auto const& component : m_component_store)
+    for (auto& component : m_pending_components)
     {
+        // Initialize component
         component->initialize();
+
+        // Move component to component store
+        Component* raw = component.get();
+        m_component_store.emplace(std::move(component));
+
+        insert_component_sorted(m_update_ordered_components, raw, EComponentInsertType::Update);
+        insert_component_sorted(m_render_ordered_components, raw, EComponentInsertType::Render);
     }
+    m_pending_components.clear();
 }
 
 //--------------------------------------------------------------------------------------------------
 void Entity::update(float delta_time)
 {
+    initialize_components();
     update_components(delta_time);
     update_entity(delta_time);
 }
@@ -92,11 +102,7 @@ void Entity::render_components(SDL_Renderer* renderer)
 //--------------------------------------------------------------------------------------------------
 void Entity::add_component(std::unique_ptr<Component> component)
 {
-    Component* raw = component.get();
-    m_component_store.emplace(std::move(component));
-
-    insert_component_sorted(m_update_ordered_components, raw, EComponentInsertType::Update);
-    insert_component_sorted(m_render_ordered_components, raw, EComponentInsertType::Render);
+    m_pending_components.emplace_back(std::move(component));
 }
 
 //--------------------------------------------------------------------------------------------------

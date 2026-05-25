@@ -1,34 +1,34 @@
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Copyright (C) 2026 AStruthers2000 - All Rights Reserved
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
 #include "core/engine.h"
 
-// #include "core/time_keeper.h"
-#include "core/game_world.h"
+#include "window.h"
+#include "core/layer.h"
+
+#include <glm/glm.hpp>
 
 namespace Core
 {
 
 static Engine* s_engine = nullptr;
 
-// //--------------------------------------------------------------------------------------------------
-// Engine::Engine(WindowSpecification const& window_spec)
-//     : m_window(std::make_unique<Window>(window_spec))
-// {
-//     // if (!SDL_Init(SDL_INIT_VIDEO))
-//     // {
-//     //     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-//     //                              "Error",
-//     //                              "Failed to initialize SDL3!",
-//     //                              nullptr);
-//     //     std::exit(-1);
-//     // }
-//     s_engine = this;
-// }
-
-Engine::Engine()
+//--------------------------------------------------------------------------------------------------
+Engine::Engine(WindowSpecification const& window_spec)
 {
-    if (!SDL_Init(SDL_INIT_VIDEO))
+    if (s_engine)
+    {
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
+                                 "Engine Initialization",
+                                 "Multiple instances of Engine detected. There should only ever be "
+                                 "one instance of Engine.",
+                                 nullptr);
+        assert(false);
+        std::exit(-1);
+    }
+
+    // Initialize SDL
+    if (!SDL_Init(window_spec.sdl_init_flags))
     {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
                                  "Error",
@@ -36,121 +36,142 @@ Engine::Engine()
                                  nullptr);
         std::exit(-1);
     }
+
+    // Initialize window
+    m_window = std::make_unique<Window>(window_spec);
+    m_window->create();
+
+    // Set static ptr to this engine
     s_engine = this;
 }
 
 //--------------------------------------------------------------------------------------------------
 Engine::~Engine()
 {
-    m_managed_world->cleanup();
-    m_managed_world.reset();
+    // Cleanup all pending layers
+    for (auto const& pending : m_pending_layers)
+    {
+        pending->cleanup();
+    }
+    m_pending_layers.clear();
 
-    // m_window->destroy();
-    // m_window.reset();
+    // Cleanup all active layers
+    for (auto const& layer : m_layer_stack)
+    {
+        layer->cleanup();
+    }
+    m_layer_stack.clear();
+
+    // Cleanup window
+    m_window->destroy();
+    m_window.reset();
 
     // Quit SDL
     SDL_Quit();
-}
 
-//--------------------------------------------------------------------------------------------------
-void Engine::initialize(std::unique_ptr<GameWorld> managed_world)
-{
-    if (managed_world == nullptr)
-    {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                 "Error",
-                                 "Can't initialize engine with invalid world; please create a valid world instance.",
-                                 nullptr);
-        return;
-    }
-
-    // m_window->create();
-
-    // Take ownership of world and initialize it with the SDL state
-    m_managed_world = std::move(managed_world);
-    m_managed_world->initialize();
-    
-    m_initialized = true;
+    // Reset static engine ptr
+    s_engine = nullptr;
 }
 
 //--------------------------------------------------------------------------------------------------
 void Engine::run()
 {
-    if (!m_initialized)
-    {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
-                                 "Error",
-                                 "Can't run Engine; must call initialize() first",
-                                 nullptr);
-        return;
-    }
-
-    // Probably come up with some more official way to track whether the engine is running or not
-    bool running = true;
+    m_running = true;
 
     // Using a variable time step method
-    // auto target_frame_time = static_cast<std::uint64_t>((1.f / 144.f) * 1E+9);
-    // std::uint64_t previous_frame_time = get_current_time();
     std::uint64_t previous_frame_time = SDL_GetTicksNS();
-    while (running)
+    while (m_running)
     {
-        // std::uint64_t frame_start_time = get_current_time();
         std::uint64_t frame_start_time = SDL_GetTicksNS();
         float delta_time = static_cast<float>(frame_start_time - previous_frame_time) / 1E+09;
-        // float delta_time = time_delta<TIME_UNITS>(previous_frame_time, frame_start_time);
+        delta_time = glm::clamp(delta_time, 0.001f, 0.1f);
 
-        running = process_input();
+        initialize_pending_layers();
+
+        bool exit_indicator = process_input();
+        if (exit_indicator)
+        {
+            stop();
+            break;
+        }
+
         update(delta_time);
         render();
-
-        // std::uint64_t frame_end_time = get_current_time();
-        // // // float frame_time = static_cast<float>(frame_end_time - frame_start_time) / 1'000.f;
-        // float frame_time = time_delta<TIME_UNITS>(frame_start_time, frame_end_time);
-        // float frame_sleep_time = static_cast<float>(target_frame_time) - frame_time;
-        // auto frame_sleep_ns = static_cast<std::int64_t>(frame_sleep_time);
-        // if (frame_sleep_ns > 0)
-        // {
-        //     SDL_DelayPrecise(frame_sleep_ns);
-        // }
-        // else
-        // {
-        //     printf("Frame longer than target\n");
-        // }
 
         previous_frame_time = frame_start_time;
     }
 }
 
-// Engine &Engine::get()
-// {
-//     assert(s_engine);
-//     return *s_engine;
-// }
+//--------------------------------------------------------------------------------------------------
+void Engine::stop()
+{
+    m_running = false;
+}
+
+//--------------------------------------------------------------------------------------------------
+Engine& Engine::get()
+{
+    assert(s_engine);
+    return *s_engine;
+}
+
+//--------------------------------------------------------------------------------------------------
+void Engine::initialize_pending_layers()
+{
+    // Initialize and move all pending worlds
+    for (auto& layer : m_pending_layers)
+    {
+        layer->initialize();
+        m_layer_stack.push_back(std::move(layer));
+    }
+    m_pending_layers.clear();
+}
 
 //--------------------------------------------------------------------------------------------------
 bool Engine::process_input()
 {
     // return m_input_subsystem.test();
-    return true;
+
+    bool quit_requested{ false };
+
+    SDL_Event event{ 0 };
+    while (SDL_PollEvent(&event))
+    {
+        switch (event.type)
+        {
+            case SDL_EventType::SDL_EVENT_QUIT:
+                quit_requested = true;
+                break;
+            // case SDL_EventType::SDL_EVENT_WINDOW_RESIZED:
+            //     Engine::get().get_window().set_size({event.window.data1, event.window.data2});
+            //     break;
+        }
+    }
+
+    return quit_requested;
 }
 
 //--------------------------------------------------------------------------------------------------
 void Engine::update(float delta_time)
 {
-    m_managed_world->update(delta_time);
+    for (auto const& layer : m_layer_stack)
+    {
+        layer->update(delta_time);
+    }
 }
 
 //--------------------------------------------------------------------------------------------------
 void Engine::render()
 {
-    // Eventually refactor this to have the window handle rendering entirely
-    // SDL_Renderer* renderer = m_window->get_sdl_renderer();
-    SDL_Renderer* renderer = nullptr;
+    SDL_Renderer* renderer = m_window->get_sdl_renderer();
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
 
     // Perform all rendering
-    m_managed_world->render(renderer);
+    for (auto const& layer : m_layer_stack)
+    {
+        layer->render(renderer);
+    }
 
     // Swap buffers and present
     SDL_RenderPresent(renderer);

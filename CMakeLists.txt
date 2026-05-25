@@ -17,7 +17,8 @@ add_library(AuroraEngine
     ${PROJECT_SOURCE_DIR}/src/component.cpp
     ${PROJECT_SOURCE_DIR}/src/engine.cpp
     ${PROJECT_SOURCE_DIR}/src/entity.cpp
-    ${PROJECT_SOURCE_DIR}/src/game_world.cpp
+    ${PROJECT_SOURCE_DIR}/src/layer.cpp
+    ${PROJECT_SOURCE_DIR}/src/window.cpp
 )
 
 # Include directories for the engine

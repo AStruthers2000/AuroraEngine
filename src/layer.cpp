@@ -1,7 +1,7 @@
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Copyright (C) 2026 AStruthers2000 - All Rights Reserved
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#include "core/game_world.h"
+////////////////////////////////////////////////////////////////////////////////////////////////////
+#include "core/layer.h"
 
 #include "core/engine.h"
 #include "core/entity.h"
@@ -13,29 +13,29 @@ namespace Core
 {
 
 //--------------------------------------------------------------------------------------------------
-GameWorld::GameWorld(Engine& owning_engine)
+Layer::Layer(Engine& owning_engine)
     : m_engine(owning_engine)
 {
 }
 
 //--------------------------------------------------------------------------------------------------
-GameWorld::~GameWorld() = default;
+Layer::~Layer() = default;
 
 //--------------------------------------------------------------------------------------------------
-void GameWorld::initialize()
+void Layer::initialize()
 {
     initialize_entities();
-    initialize_world();
+    initialize_layer();
 }
 
 //--------------------------------------------------------------------------------------------------
-void GameWorld::initialize_world()
+void Layer::initialize_layer()
 {
     // Intentionally left blank; virtual function.
 }
 
 //--------------------------------------------------------------------------------------------------
-void GameWorld::initialize_entities()
+void Layer::initialize_entities()
 {
     for (auto const& entity : m_pending_entities)
     {
@@ -46,7 +46,7 @@ void GameWorld::initialize_entities()
         }
         else
         {
-            std::println("[GameWorld::initialize_entities] An Entity was in the pending list but "
+            std::println("[Layer::initialize_entities] An Entity was in the pending list but "
                          "its State was: %d",
                          static_cast<int>(entity->get_entity_state()));
         }
@@ -55,20 +55,20 @@ void GameWorld::initialize_entities()
 }
 
 //--------------------------------------------------------------------------------------------------
-void GameWorld::update(float delta_time)
+void Layer::update(float delta_time)
 {
     update_entities(delta_time);
-    update_world(delta_time);
+    update_layer(delta_time);
 }
 
 //--------------------------------------------------------------------------------------------------
-void GameWorld::update_world(float delta_time)
+void Layer::update_layer(float delta_time)
 {
     // Intentionally left blank; virtual function.
 }
 
 //--------------------------------------------------------------------------------------------------
-void GameWorld::update_entities(float delta_time)
+void Layer::update_entities(float delta_time)
 {
     // Initialize and move all pending entities
     initialize_entities();
@@ -96,20 +96,20 @@ void GameWorld::update_entities(float delta_time)
 }
 
 //--------------------------------------------------------------------------------------------------
-void GameWorld::render(SDL_Renderer* renderer)
+void Layer::render(SDL_Renderer* renderer)
 {
     render_entities(renderer);
-    render_world(renderer);
+    render_layer(renderer);
 }
 
 //--------------------------------------------------------------------------------------------------
-void GameWorld::render_world(SDL_Renderer* renderer)
+void Layer::render_layer(SDL_Renderer* renderer)
 {
     // Intentionally left blank; virtual function.
 }
 
 //--------------------------------------------------------------------------------------------------
-void GameWorld::render_entities(SDL_Renderer* renderer)
+void Layer::render_entities(SDL_Renderer* renderer)
 {
     for (auto const& entity : m_entities)
     {
@@ -118,40 +118,33 @@ void GameWorld::render_entities(SDL_Renderer* renderer)
 }
 
 //--------------------------------------------------------------------------------------------------
-void GameWorld::cleanup()
+void Layer::cleanup()
 {
     cleanup_entities();
-    cleanup_world();
+    cleanup_layer();
 }
 
 //--------------------------------------------------------------------------------------------------
-void GameWorld::cleanup_world()
+void Layer::cleanup_layer()
 {
     // Intentionally left blank; virtual function.
 }
 
 //--------------------------------------------------------------------------------------------------
-void GameWorld::cleanup_entities()
+void Layer::cleanup_entities()
 {
-    while (!m_pending_entities.empty())
-    {
-        m_pending_entities.back().reset();
-    }
-
-    while (!m_entities.empty())
-    {
-        m_entities.back().reset();
-    }
+    m_pending_entities.clear();
+    m_entities.clear();
 }
 
 //--------------------------------------------------------------------------------------------------
-void GameWorld::add_entity(std::shared_ptr<Entity> entity)
+void Layer::add_entity(std::shared_ptr<Entity> entity)
 {
     m_pending_entities.emplace_back(std::move(entity));
 }
 
 //--------------------------------------------------------------------------------------------------
-void GameWorld::move_entity_to_active(std::shared_ptr<Entity> entity)
+void Layer::move_entity_to_active(std::shared_ptr<Entity> entity)
 {
     std::uint8_t priority = entity->get_update_order();
 

@@ -1,30 +1,37 @@
-#include "core/window.h"
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Copyright (C) 2026 AStruthers2000 - All Rights Reserved
+////////////////////////////////////////////////////////////////////////////////////////////////////
+#include "window.h"
 
 namespace Core
 {
+
+//--------------------------------------------------------------------------------------------------
 Window::Window(WindowSpecification const &spec)
-        : m_specification(spec)
+    : m_specification(spec)
 {
 }
 
+//--------------------------------------------------------------------------------------------------
 Window::~Window()
 {
     destroy();
 }
 
+//--------------------------------------------------------------------------------------------------
 void Window::create()
 {
-    m_sdl_window = SDL_CreateWindow(m_specification.title.data(),
+    m_sdl_window = SDL_CreateWindow(m_specification.title.c_str(),
                                     static_cast<int>(m_specification.window_size.x),
                                     static_cast<int>(m_specification.window_size.y),
-                                    SDL_WINDOW_RESIZABLE);
+                                    m_specification.sdl_window_flags);
     if (!m_sdl_window)
     {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,
                                  "Error",
                                  "Failed to create window!",
                                  nullptr);
-        return;
+        std::exit(-1);
     }
 
     m_sdl_renderer = SDL_CreateRenderer(m_sdl_window, nullptr);
@@ -34,17 +41,18 @@ void Window::create()
                                  "Error",
                                  "Failed to create renderer!",
                                  nullptr);
-        return;
+        std::exit(-1);
     }
 
-    set_size(m_specification.window_size);
     SDL_SetRenderLogicalPresentation(m_sdl_renderer,
                                      static_cast<int>(m_specification.logical_size.x),
                                      static_cast<int>(m_specification.logical_size.y),
-                                     SDL_RendererLogicalPresentation::SDL_LOGICAL_PRESENTATION_LETTERBOX);
+                                     m_specification.sdl_renderer_mode);
 
+    SDL_SetRenderVSync(m_sdl_renderer, m_specification.vsync_flag);
 }
 
+//--------------------------------------------------------------------------------------------------
 void Window::destroy()
 {
     if (m_sdl_renderer)

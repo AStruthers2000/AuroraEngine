@@ -1,14 +1,14 @@
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Copyright (C) 2026 AStruthers2000 - All Rights Reserved
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/// @brief Base Entity class. Root of all objects in a GameWorld. Override initialize_entity(), update_entity(), and/or
-///        render_entity() for custom behavior.
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// @brief Base Entity class. Root of all objects in a Layer. Override initialize_entity(),
+///        update_entity(), and/or render_entity() for custom behavior.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 #ifndef ENGINE_ENTITY_H
 #define ENGINE_ENTITY_H
 
 #include "core/component.h"
-#include "core/game_world.h"
+#include "core/layer.h"
 #include "core/components/transform_component.h"
 
 #include <SDL3/SDL.h>
@@ -42,9 +42,7 @@ public:
     ///
     /// @param [in] owning_world - Entity must know what world owns it. 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    Entity(GameWorld& owning_world, std::uint8_t update_order = DEFAULT_SORTING_ORDER);
-
-    // Entity(GameWorld& owning_world, TransformComponent const& initial_transform);
+    Entity(Layer& owning_world, std::uint8_t update_order = DEFAULT_SORTING_ORDER);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Entity destructor.
@@ -64,7 +62,7 @@ public:
     virtual void initialize_entity();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Updates this Entity. Called from owning GameWorld. Not overridable.
+    /// @brief Updates this Entity. Called from owning Layer. Not overridable.
     ///
     /// @param [in] delta_time - Time since last update. 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -78,16 +76,16 @@ public:
     virtual void update_entity(float delta_time);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Renders this Entity. Called from owning GameWorld. Not overridable.
+    /// @brief Renders this Entity. Called from owning Layer. Not overridable.
     ///
-    /// @param [in] renderer - Renderer provided by the owning GameWorld. 
+    /// @param [in] renderer - Renderer provided by the owning Layer. 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     void render(SDL_Renderer* renderer);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Runs any Entity-specific render code. Called from Entity::render(). Overridable.
     ///
-    /// @param [in] renderer - Renderer provided by the owning GameWorld. 
+    /// @param [in] renderer - Renderer provided by the owning Layer. 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     virtual void render_entity(SDL_Renderer* renderer);
 
@@ -148,7 +146,7 @@ private:
     /// @brief Renders all the Components attached to the Entity. Called from Entity::render(). Not
     ///        overridable.
     ///
-    /// @param [in] renderer - Renderer provided by the owning GameWorld. 
+    /// @param [in] renderer - Renderer provided by the owning Layer. 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     void render_components(SDL_Renderer* renderer);
 
@@ -165,11 +163,12 @@ private:
                                  Component* component,
                                  EComponentInsertType insert_sorter);
     
-    GameWorld& m_world;
+    Layer& m_world;
     TransformComponent m_transform;
     std::uint8_t m_update_order;
     EState m_state{ EState::Pending };
 
+    std::vector<std::unique_ptr<Component>> m_pending_components{};
     std::unordered_set<std::unique_ptr<Component>> m_component_store{};
     std::vector<Component*> m_update_ordered_components{};
     std::vector<Component*> m_render_ordered_components{};

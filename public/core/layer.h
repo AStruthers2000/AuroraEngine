@@ -1,11 +1,12 @@
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Copyright (C) 2026 AStruthers2000 - All Rights Reserved
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/// @brief Base GameWorld class. Owns Entities and updates them as part of the core Engine. Override initialize_world(),
-///        update_world(), render_world(), and/or cleanup_world() for custom behavior.
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#ifndef ENGINE_GAME_WORLD_H
-#define ENGINE_GAME_WORLD_H
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// @brief Base Layer class. Owns Entities and updates them as part of the core Engine. Override
+///        initialize_layer(), update_layer(), render_layer(), and/or cleanup_layer() for custom
+///        behavior.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+#ifndef ENGINE_LAYER_H
+#define ENGINE_LAYER_H
 
 #include <SDL3/SDL.h>
 
@@ -21,79 +22,77 @@ constexpr std::uint8_t DEFAULT_SORTING_ORDER = 100;
 class Engine;
 class Entity;
 
-class GameWorld
+class Layer
 {
 public:
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief GameWorld constructor.
+    /// @brief Layer constructor.
     ///
-    /// @param [in] owning_engine - GameWorld must know what engine owns it.
+    /// @param [in] owning_engine - Layer must know what engine owns it.
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    explicit GameWorld(Engine& owning_engine);
+    explicit Layer(Engine& owning_engine);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief GameWorld destructor.
+    /// @brief Layer destructor.
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    ~GameWorld();
+    ~Layer();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Initializes this GameWorld. Initializes all currently-pending Entities. Not
-    ///        overridable.
+    /// @brief Initializes this Layer. Initializes all currently-pending Entities. Not overridable.
     //////////////////////////////////////////////////////////////////////////////////////////////// 
     void initialize();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Runs any GameWorld-specific initialization code. Called from GameWorld::initialize().
+    /// @brief Runs any Layer-specific initialization code. Called from Layer::initialize().
     ///        Overridable.
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    virtual void initialize_world();
+    virtual void initialize_layer();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Updates this GameWorld. Called from owning Engine. Not overridable.
+    /// @brief Updates this Layer. Called from owning Engine. Not overridable.
     ///
     /// @param [in] delta_time - Time since last update. 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     void update(float delta_time);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Runs any GameWorld-specific update code. Called from GameWorld::update().
-    ///        Overridable.
+    /// @brief Runs any Layer-specific update code. Called from Layer::update(). Overridable.
+    ///
     /// @param [in] delta_time - Time since last update. 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    virtual void update_world(float delta_time);
+    virtual void update_layer(float delta_time);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Renders this GameWorld. Called from owning Engine. Not overridable.
+    /// @brief Renders this Layer. Called from owning Engine. Not overridable.
     ///
     /// @param [in] renderer - Renderer provided by the owning Engine. 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     void render(SDL_Renderer* renderer);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Runs any GameWorld-specific render code. Called from GameWorld::render().
-    ///        Overridable.
+    /// @brief Runs any Layer-specific render code. Called from Layer::render(). Overridable.
     ///
     /// @param [in] renderer - Renderer provided by the owning Engine. 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    virtual void render_world(SDL_Renderer* renderer);
+    virtual void render_layer(SDL_Renderer* renderer);
     
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Cleans up this GameWorld instance. Called from owning Engine. Not overridable.
+    /// @brief Cleans up this Layer instance. Called from owning Engine. Not overridable.
     ////////////////////////////////////////////////////////////////////////////////////////////////
     void cleanup();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Runs any GameWorld-specific cleanup code. Called from GameWorld::cleanup().
+    /// @brief Runs any Layer-specific cleanup code. Called from Layer::cleanup().
     ///        Overridable.
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    virtual void cleanup_world();
+    virtual void cleanup_layer();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Adds an Entity to this GameWorld. GameWorld assumes ownership of the Entity. Entities
-    ///        are added to a collection of pending Entities; each pending Entity will get
-    ///        initialized (i.e. `Entity::initialize()`) at the beginning of the next frame.
+    /// @brief Adds an Entity to this Layer. Layer assumes ownership of the Entity. Entities are
+    ///        added to a collection of pending Entities; each pending Entity will get initialized
+    ///        (i.e. `Entity::initialize()`) at the beginning of the next frame.
     ///
-    /// @param [in] entity - Entity to be added to this GameWorld.
+    /// @param [in] entity - Entity to be added to this Layer.
     ////////////////////////////////////////////////////////////////////////////////////////////////
     void add_entity(std::shared_ptr<Entity> entity);
 
@@ -104,36 +103,36 @@ public:
     // void remove_entity(std::shared_ptr<Entity> entity);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @return Returns a reference to the Engine that owns this GameWorld.
+    /// @return Returns a reference to the Engine that owns this Layer.
     ////////////////////////////////////////////////////////////////////////////////////////////////
     Engine& get_engine() { return m_engine; }
 
 private:
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Initializes all the Entities owned by this GameWorld. Called from
-    ///        GameWorld::initialize(). Not overridable.
+    /// @brief Initializes all the Entities owned by this Layer. Called from Layer::initialize().
+    ///        Not overridable.
     ////////////////////////////////////////////////////////////////////////////////////////////////
     void initialize_entities();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Updates all the Entities owned by this GameWorld. Called from GameWorld::update().
-    ///        Not overridable.
+    /// @brief Updates all the Entities owned by this Layer. Called from Layer::update(). Not
+    ///        overridable.
     ///
     /// @param [in] delta_time - Time since last update. 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     void update_entities(float delta_time);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Renders all the Entities owned by this GameWorld. Called from GameWorld::render().
-    ///        Not overridable.
+    /// @brief Renders all the Entities owned by this Layer. Called from Layer::render(). Not
+    ///        overridable.
     ///
     /// @param [in] renderer - Renderer provided by the owning Engine. 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     void render_entities(SDL_Renderer* renderer);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Cleans up all the Entities owned by this GameWorld. Called from GameWorld::cleanup().
-    ///        Not overridable.
+    /// @brief Cleans up all the Entities owned by this Layer. Called from Layer::cleanup(). Not
+    ///        overridable.
     ////////////////////////////////////////////////////////////////////////////////////////////////
     void cleanup_entities();
 
@@ -147,10 +146,10 @@ private:
 
     Engine& m_engine;
 
-    std::vector<std::shared_ptr<Entity>> m_entities{};
     std::vector<std::shared_ptr<Entity>> m_pending_entities{};
+    std::vector<std::shared_ptr<Entity>> m_entities{};
 };
 
 } // namespace Core
 
-#endif // ENGINE_GAME_WORLD_H
+#endif // ENGINE_LAYER_H

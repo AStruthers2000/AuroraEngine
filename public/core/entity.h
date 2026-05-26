@@ -14,7 +14,8 @@
 #include <SDL3/SDL.h>
 
 #include <cstdint>
-#include <unordered_set>
+#include <typeindex>
+#include <unordered_map>
 #include <vector>
 
 namespace Core
@@ -31,8 +32,11 @@ public:
         Active,     ///< Entity is in the "normal" state; Entity::update() is called every tick.
         Inactive,   ///< Entity is paused. Entity::update() will not be called, but the Entity can
                     ///< return to the Active state with no overhead.
-        Pending,    ///< Entity has been constructed but not initialized. On transition from Pending
-                    ///< to Active, Entity::initialize() will be called.
+        Pending,    ///< Entity has been constructed but not yet awoken. On the next initialization
+                    ///< pass, Entity::awake() will be called, transitioning to Awoken.
+        Awoken,     ///< Entity has completed awake() but has not yet started. All Components are
+                    ///< initialized and accessible. Entity::start() will be called once all sibling
+                    ///< Entities in the owning Layer have also awoken.
         Destroyed,  ///< Entity has been marked for destruction. Entity::~Entity() will be called on
                     ///< the next update cycle
     };
@@ -50,16 +54,45 @@ public:
     virtual ~Entity() = default;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Initializes this Entity. Called after Entity construction, but before the Entity
-    ///        enters the main update cycle. Not overridable.
+    /// @brief Phase 1 of Entity initialization. Flushes all pending Components into the Component
+    ///        store and calls awake_entity(). Transitions state from Pending to Awoken. Not
+    ///        overridable.
+    ///
+    /// @note Called by the owning Layer before start(). Guaranteed to be called before any Entity
+    ///       in the Layer calls start(), which means awake_entity() overrides must not assume other
+    ///       Entities have awoken yet.
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    void initialize();
+    void awake();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Runs any Entity-specific initialization code. Called from Entity::initialize().
+    /// @brief Runs any Entity-specific Phase 1 initialization code. Called from Entity::awake().
     ///        Overridable.
+    ///
+    /// @note Contract: all Components added during construction are accessible via
+    ///       get_component<T>(). Do not access Components or state on other Entities here; their
+    ///       awake() is not guaranteed to have run yet.
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    virtual void initialize_entity();
+    virtual void awake_entity();
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Phase 2 of Entity initialization. Calls start_entity() and transitions state from
+    ///        Awoken to Active. Not overridable.
+    ///
+    /// @note Called by the owning Layer after every pending Entity in the same initialization pass
+    ///       has completed awake(). It is safe to access other Entities and their Components here.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void start();
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Runs any Entity-specific Phase 2 initialization code. Called from Entity::start().
+    ///        Overridable.
+    ///
+    /// @note Contract: all Entities that were pending in the same initialization pass have
+    ///       completed awake_entity(), so their Components are fully initialized and accessible.
+    ///       Use this override, rather than awake_entity(), for any setup that requires references
+    ///        to other Entities or their Components.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    virtual void start_entity();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Updates this Entity. Called from owning Layer. Not overridable.
@@ -117,6 +150,29 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////
     EState get_entity_state() const { return m_state; }
 
+protected:
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Tries to get the component of type TComponent owned by this Entity. Uses RTTI to
+    ///        perform a O(1) lookup.
+    ///
+    /// @tparam TComponent Templated Component type to search for. Requires that this type is
+    ///                    derived from Component.
+    ///
+    /// @return Returns a raw pointer to the Component of type TComponent, or nullptr if no
+    ///         Component of that type was found.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    template <typename TComponent>
+    requires(std::is_base_of_v<Component, TComponent>)
+    TComponent* get_component() const
+    {
+        auto it = m_component_store.find(std::type_index(typeid(TComponent)));
+        if (it != m_component_store.end())
+        {
+            return static_cast<TComponent*>(it->second.get());
+        }
+        return nullptr;
+    }
+
 private:
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Enum that allows insert_component_sorted() to gather the correct sorting order from
@@ -164,12 +220,11 @@ private:
                                  EComponentInsertType insert_sorter);
     
     Layer& m_world;
-    TransformComponent m_transform;
     std::uint8_t m_update_order;
     EState m_state{ EState::Pending };
 
     std::vector<std::unique_ptr<Component>> m_pending_components{};
-    std::unordered_set<std::unique_ptr<Component>> m_component_store{};
+    std::unordered_map<std::type_index, std::unique_ptr<Component>> m_component_store{};
     std::vector<Component*> m_update_ordered_components{};
     std::vector<Component*> m_render_ordered_components{};
 };

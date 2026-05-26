@@ -41,13 +41,27 @@ void Layer::initialize_entities()
     {
         if (entity->get_entity_state() == Entity::EState::Pending)
         {
-            entity->initialize();
+            entity->awake();
+        }
+        else
+        {
+            std::println("[Layer::initialize_entities] An Entity in the pending list couldn't be "
+                         "awoken, because its State was: %d",
+                         static_cast<int>(entity->get_entity_state()));
+        }
+    }
+
+    for (auto const& entity : m_pending_entities)
+    {
+        if (entity->get_entity_state() == Entity::EState::Awoken)
+        {
+            entity->start();
             move_entity_to_active(entity);
         }
         else
         {
-            std::println("[Layer::initialize_entities] An Entity was in the pending list but "
-                         "its State was: %d",
+            std::println("[Layer::initialize_entities] An Entity in the pending list couldn't be "
+                         "started, because its State was: %d",
                          static_cast<int>(entity->get_entity_state()));
         }
     }

@@ -3,7 +3,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 #include "core/entity.h"
 
+#include <algorithm>
 #include <print>
+#include <ranges>
 
 namespace Core
 {
@@ -11,27 +13,49 @@ namespace Core
 //--------------------------------------------------------------------------------------------------
 Entity::Entity(Layer& owning_world, std::uint8_t update_order)
     : m_world(owning_world)
-    , m_transform(*this)
 {
+    add_component(std::make_unique<TransformComponent>(*this));
 }
 
 //--------------------------------------------------------------------------------------------------
-void Entity::initialize()
+void Entity::awake()
 {
     if (m_state == EState::Pending)
     {
         initialize_components();
-        initialize_entity();
-        m_state = EState::Active;
+        awake_entity();
+        m_state = EState::Awoken;
     }
     else
     {
-        std::println("[Entity::initialize] initialize() was called more than once.");
+        std::println("[Entity::awake] awake() called in unexpected state: %d",
+                     static_cast<int>(m_state));
     }
 }
 
 //--------------------------------------------------------------------------------------------------
-void Entity::initialize_entity()
+void Entity::awake_entity()
+{
+    // Intentionally left blank; virtual function.
+}
+
+//--------------------------------------------------------------------------------------------------
+void Entity::start()
+{
+    if (m_state == EState::Awoken)
+    {
+        start_entity();
+        m_state = EState::Active;
+    }
+    else
+    {
+        std::println("[Entity::start] start() called in unexpected state: %d",
+                     static_cast<int>(m_state));
+    }
+}
+
+//--------------------------------------------------------------------------------------------------
+void Entity::start_entity()
 {
     // Intentionally left blank; virtual function.
 }
@@ -46,7 +70,7 @@ void Entity::initialize_components()
 
         // Move component to component store
         Component* raw = component.get();
-        m_component_store.emplace(std::move(component));
+        m_component_store.try_emplace(std::type_index(typeid(*raw)), std::move(component));
 
         insert_component_sorted(m_update_ordered_components, raw, EComponentInsertType::Update);
         insert_component_sorted(m_render_ordered_components, raw, EComponentInsertType::Render);
@@ -102,6 +126,29 @@ void Entity::render_components(SDL_Renderer* renderer)
 //--------------------------------------------------------------------------------------------------
 void Entity::add_component(std::unique_ptr<Component> component)
 {
+    std::type_index const type{ typeid(*component) };
+
+    // Check already-initialized components. O(1)
+    if (m_component_store.contains(type))
+    {
+        std::println("[Entity::add_component] Component '{}' already exists.", type.name());
+        return;
+    }
+
+    // Check pending components. O(n), but this list is typically tiny
+    bool const already_pending = std::ranges::any_of(
+        m_pending_components,
+        [&type](std::unique_ptr<Component> const& pending)
+        {
+            return std::type_index{ typeid(*pending) } == type;
+        });
+
+    if (already_pending)
+    {
+        std::println("[Entity::add_component] Component '{}' is already pending.", type.name());
+        return;
+    }
+
     m_pending_components.emplace_back(std::move(component));
 }
 

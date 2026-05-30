@@ -1,9 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Copyright (C) 2026 AStruthers2000 - All Rights Reserved
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// @brief Base Layer class. Owns Entities and updates them as part of the core Engine. Override
-///        initialize_layer(), update_layer(), render_layer(), and/or cleanup_layer() for custom
-///        behavior.
+/// @brief Base Layer class. Owns Entities and updates them as part of the core Engine.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 #ifndef CORE_LAYER_H
 #define CORE_LAYER_H
@@ -16,12 +14,18 @@
 namespace Core
 {
 
-/// @brief Default sorting order for components. Smaller numbers update/render/etc. earlier.
+/// @brief Default sorting order for Entities and Components. Smaller numbers update/render/etc.
+///        earlier.
 constexpr std::uint8_t DEFAULT_SORTING_ORDER = 100;
 
 class Engine;
 class Entity;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// @brief Base Layer class. Owns Entities and updates them as part of the core Engine. Override
+///        initialize_layer(), update_layer(), render_layer(), and/or cleanup_layer() for custom
+///        behavior.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 class Layer
 {
 public:

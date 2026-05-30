@@ -2,8 +2,7 @@
 /// Copyright (C) 2026 AStruthers2000 - All Rights Reserved
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief Base Component class. Components are owned by Entities and provide specializations of
-///        functionality. Override awake_component(), start_component(), update_component(), and/or
-///        render_component() for custom behavior.
+///        functionality.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 #ifndef CORE_COMPONENT_H
 #define CORE_COMPONENT_H
@@ -18,6 +17,11 @@ namespace Core
 
 class Entity;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// @brief Base Component class. Components are owned by Entities and provide specializations of
+///        functionality. Override awake_component(), start_component(), update_component(), and/or
+///        render_component() for custom behavior.
+////////////////////////////////////////////////////////////////////////////////////////////////////
 class Component
 {
 public:

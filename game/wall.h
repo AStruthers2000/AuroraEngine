@@ -22,6 +22,7 @@ private:
         .render_order = Core::DEFAULT_SORTING_ORDER,
     };
 
+    /// @brief #19535F
     SDL_Color m_color
     {
         .r = 25,
@@ -30,6 +31,5 @@ private:
         .a = SDL_ALPHA_OPAQUE
     };
 };
-
 
 #endif //PONG_WALL_H

@@ -177,4 +177,15 @@ void Engine::render()
     SDL_RenderPresent(renderer);
 }
 
+//--------------------------------------------------------------------------------------------------
+glm::vec2 Engine::get_window_size() const
+{
+    SDL_Window* window = get_window().get_sdl_window();
+
+    int x{ 0 }; int y{ 0 };
+    SDL_GetWindowSizeInPixels(window, &x, &y);
+
+    return glm::vec2{x, y};
+}
+
 } // namespace Core

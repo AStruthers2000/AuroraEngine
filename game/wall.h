@@ -24,16 +24,13 @@ public:
 
     ~Wall() override = default;
 
-    void awake_entity() override;
     void render_entity(SDL_Renderer* renderer) override;
     // float elasticity() const { return m_elasticity; }
 
 private:
     // SDL_Color m_color;
     // float m_elasticity;
-    Core::TransformComponent* transform{ nullptr };
-    glm::vec2 m_position;
-    glm::vec2 m_size;
+    std::weak_ptr<Core::TransformComponent> m_transform{};
 };
 
 

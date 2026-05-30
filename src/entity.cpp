@@ -3,10 +3,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 #include "core/entity.h"
 
-#include <algorithm>
-#include <print>
-#include <ranges>
-
 namespace Core
 {
 
@@ -14,7 +10,6 @@ namespace Core
 Entity::Entity(Layer& owning_world, std::uint8_t update_order)
     : m_world(owning_world)
 {
-    add_component(std::make_unique<TransformComponent>(*this));
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -22,6 +17,14 @@ void Entity::awake()
 {
     if (m_state == EState::Pending)
     {
+        // Try to add a TransformComponent right before initializing components. This allows the
+        // user to add their own transform component during construction if they'd like, but
+        // guarantees that the Entity will have a transform component before awake_entity().
+        if (!has_component<TransformComponent>())
+        {
+            add_component<TransformComponent>();
+        }
+
         initialize_components();
         awake_entity();
         m_state = EState::Awoken;
@@ -63,17 +66,16 @@ void Entity::start_entity()
 //--------------------------------------------------------------------------------------------------
 void Entity::initialize_components()
 {
-    for (auto& component : m_pending_components)
+    for (std::shared_ptr<Component> component : m_pending_components)
     {
         // Initialize component
         component->initialize();
 
         // Move component to component store
-        Component* raw = component.get();
-        m_component_store.try_emplace(std::type_index(typeid(*raw)), std::move(component));
+        insert_component_sorted(m_update_ordered_components, component, EComponentInsertType::Update);
+        insert_component_sorted(m_render_ordered_components, component, EComponentInsertType::Render);
 
-        insert_component_sorted(m_update_ordered_components, raw, EComponentInsertType::Update);
-        insert_component_sorted(m_render_ordered_components, raw, EComponentInsertType::Render);
+        m_component_store.try_emplace(std::type_index(typeid(*component.get())), std::move(component));
     }
     m_pending_components.clear();
 }
@@ -95,9 +97,12 @@ void Entity::update_entity(float delta_time)
 //--------------------------------------------------------------------------------------------------
 void Entity::update_components(float delta_time)
 {
-    for (Component* component : m_update_ordered_components)
+    for (std::weak_ptr<Component> component : m_update_ordered_components)
     {
-        component->update_component(delta_time);
+        if (auto component_ptr = component.lock())
+        {
+            component_ptr->update_component(delta_time);
+        }
     }
 }
 
@@ -117,39 +122,13 @@ void Entity::render_entity(SDL_Renderer* renderer)
 //--------------------------------------------------------------------------------------------------
 void Entity::render_components(SDL_Renderer* renderer)
 {
-    for (Component* component : m_render_ordered_components)
+    for (std::weak_ptr<Component> component : m_render_ordered_components)
     {
-        component->render_component(renderer);
-    }
-}
-
-//--------------------------------------------------------------------------------------------------
-void Entity::add_component(std::unique_ptr<Component> component)
-{
-    std::type_index const type{ typeid(*component) };
-
-    // Check already-initialized components. O(1)
-    if (m_component_store.contains(type))
-    {
-        std::println("[Entity::add_component] Component '{}' already exists.", type.name());
-        return;
-    }
-
-    // Check pending components. O(n), but this list is typically tiny
-    bool const already_pending = std::ranges::any_of(
-        m_pending_components,
-        [&type](std::unique_ptr<Component> const& pending)
+        if (auto component_ptr = component.lock())
         {
-            return std::type_index{ typeid(*pending) } == type;
-        });
-
-    if (already_pending)
-    {
-        std::println("[Entity::add_component] Component '{}' is already pending.", type.name());
-        return;
+            component_ptr->render_component(renderer);
+        }
     }
-
-    m_pending_components.emplace_back(std::move(component));
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -159,11 +138,11 @@ void Entity::destroy_entity()
 }
 
 //--------------------------------------------------------------------------------------------------
-void Entity::insert_component_sorted(std::vector<Component*>& component_collection,
-                                     Component* component,
+void Entity::insert_component_sorted(std::vector<std::weak_ptr<Component>>& component_collection,
+                                     std::weak_ptr<Component> component,
                                      EComponentInsertType insert_sorter)
 {
-    auto get_priority = [insert_sorter](Component const* c) -> std::uint8_t
+    auto get_priority = [insert_sorter](std::shared_ptr<Component> const c) -> std::uint8_t
     {
         std::uint8_t priority = 0;
 
@@ -185,15 +164,19 @@ void Entity::insert_component_sorted(std::vector<Component*>& component_collecti
         return priority;
     };
 
-    std::uint8_t const my_priority = get_priority(component);
+    std::uint8_t const my_priority = get_priority(component.lock());
 
     // Find the first component with a higher order
     auto it = std::find_if(
         component_collection.begin(),
         component_collection.end(),
-        [my_priority, get_priority](Component const* other)
+        [my_priority, get_priority](std::weak_ptr<Component> other)
         {
-            return get_priority(other) > my_priority;
+            if (auto shared = other.lock())
+            {
+                return get_priority(shared) > my_priority;
+            }
+            return false;
         });
 
     component_collection.insert(it, component);

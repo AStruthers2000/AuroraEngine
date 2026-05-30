@@ -94,7 +94,30 @@ public:
     ///
     /// @param [in] entity - Entity to be added to this Layer.
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    void add_entity(std::shared_ptr<Entity> entity);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Adds an Entity to this Layer. Constructs an Entity of type TEntity. Entities are
+    ///        added to a collection of pending Entities; each pending Entity will get initialized
+    ///        (i.e. `Entity::initialize()`) at the beginning of the next frame.
+    ///
+    /// @tparam TEntity Templated Entity type to construct and attach. Requires that this type is
+    ///                 derived from Entity.
+    /// @tparam ...Args Types of arguments to forward to the TEntity constructor; automatically
+    ///                 deduced.
+    ///
+    /// @param [in] args - Arguments forwarded to the TEntity constructor.
+    ///
+    /// @return Returns a std::weak_ptr<TEntity> to the newly created Entity (safe for long-term
+    ///         storage).
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    template <typename TEntity, typename... Args>
+    requires(std::derived_from<TEntity, Entity>)
+    std::weak_ptr<TEntity> add_entity(Args&&... args)
+    {
+        auto entity_ptr = std::make_shared<TEntity>(*this, std::forward<Args>(args)...);
+        m_pending_entities.push_back(entity_ptr);
+        return entity_ptr;
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief 

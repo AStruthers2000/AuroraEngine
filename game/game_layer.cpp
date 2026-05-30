@@ -9,8 +9,13 @@ GameLayer::GameLayer(Core::Engine& owner)
     : Core::Layer(owner)
 {
     // Add walls
-    add_entity(std::make_unique<Wall>(*this, 100, glm::vec2{0, 0}, glm::vec2{100, 100}));
-    add_entity(std::make_unique<Wall>(*this, 100, glm::vec2{1000, 0}, glm::vec2{10, 100}));
+    glm::vec2 window_size = Core::Engine::get().get_window_size();
+    float const court_width{ window_size.x };
+    float const court_height{ window_size.y };
+    add_entity<Wall>(100, glm::vec2{0, 0}, glm::vec2{court_width, wall_thickness});
+    add_entity<Wall>(100, glm::vec2{0, court_height - wall_thickness}, glm::vec2{court_width, wall_thickness});
+    add_entity<Wall>(100, glm::vec2{0, 0}, glm::vec2{wall_thickness, court_height});
+    add_entity<Wall>(100, glm::vec2{court_width - wall_thickness, 0}, glm::vec2{wall_thickness, court_height});
 
     // Add players
 

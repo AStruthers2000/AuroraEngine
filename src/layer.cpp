@@ -152,12 +152,6 @@ void Layer::cleanup_entities()
 }
 
 //--------------------------------------------------------------------------------------------------
-void Layer::add_entity(std::shared_ptr<Entity> entity)
-{
-    m_pending_entities.emplace_back(std::move(entity));
-}
-
-//--------------------------------------------------------------------------------------------------
 void Layer::move_entity_to_active(std::shared_ptr<Entity> entity)
 {
     std::uint8_t priority = entity->get_update_order();

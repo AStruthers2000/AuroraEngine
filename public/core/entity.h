@@ -13,7 +13,10 @@
 
 #include <SDL3/SDL.h>
 
+#include <algorithm>
 #include <cstdint>
+#include <print>
+#include <ranges>
 #include <typeindex>
 #include <unordered_map>
 #include <vector>
@@ -123,11 +126,42 @@ public:
     virtual void render_entity(SDL_Renderer* renderer);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Adds a Component to this Entity. Entity assumes ownership of the Component.
+    /// @brief Adds a Component to this Entity. Constructs a Component of type TComponent,
+    ///        forwarding the arguments passed in args. Entity assumes ownership of the Component.
+    ///        If there is already a component of type TComponent as part of this Entity (either
+    ///        pending or active), this function will do nothing; dynamic memory allocation (i.e.
+    ///        `std::make_shared`) only occurs after the Entity is checked for another active or
+    ///        pending Component of the same type.
     ///
-    /// @param [in] component - Component to be added to this Entity. 
+    /// @tparam TComponent Templated Component type to construct and attach. Requires that this type
+    ///                    is derived from Component.
+    /// @tparam ...Args    Types of arguments to forward to the TComponent constructor;
+    ///                    automatically deduced.
+    ///
+    /// @param [in] args - Arguments forwarded to the TComponent constructor.
+    ///
+    /// @return Returns a std::weak_ptr<TComponent> to the newly created Component (safe for
+    ///         long-term storage), or an empty std:::weak_ptr<TComponent> if a Component of that
+    ///         type already exists (pending or active) on this Entity.
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    void add_component(std::unique_ptr<Component> component);
+    template <typename TComponent, typename... Args>
+    requires(std::derived_from<TComponent, Component>)
+    std::weak_ptr<TComponent> add_component(Args&&... args)
+    {
+        std::weak_ptr<TComponent> rtn{};
+        if (has_component<TComponent>())
+        {
+            std::type_index const type{ typeid(TComponent) };
+            std::println("[Entity::add_component] Component '{}' already exists.", type.name());
+        }
+        else
+        {
+            auto component_ptr = std::make_shared<TComponent>(*this, std::forward<Args>(args)...);
+            m_pending_components.push_back(component_ptr);
+            rtn = component_ptr;
+        }
+        return rtn;
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief 
@@ -162,15 +196,51 @@ protected:
     ///         Component of that type was found.
     ////////////////////////////////////////////////////////////////////////////////////////////////
     template <typename TComponent>
-    requires(std::is_base_of_v<Component, TComponent>)
-    TComponent* get_component() const
+    requires(std::derived_from<TComponent, Component>)
+    std::weak_ptr<TComponent> get_component() const
     {
         auto it = m_component_store.find(std::type_index(typeid(TComponent)));
         if (it != m_component_store.end())
         {
-            return static_cast<TComponent*>(it->second.get());
+            return static_cast<std::weak_ptr<TComponent>>(it->second.get());
         }
-        return nullptr;
+        return std::weak_ptr<TComponent>();
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Searches for a component of the given TComponent type. Optionally searches through
+    ///        the pending components as well.
+    ///
+    /// @tparam TComponent Templated Component type to search for. Requires that this type is
+    ///                    derived from Component.
+    ///
+    /// @param [in] search_pending - Optional parameter to additionally search through the pending
+    ///                              Components. If true, has_component<> will search both the
+    ///                              pending Components and the active Components for TComponent. If
+    ///                              false, has_component<> will only search the active Components.
+    ///                              Defaults to true.
+    ///
+    /// @return Returns true if there is a TComponent on this Entity.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    template <typename TComponent>
+    requires(std::derived_from<TComponent, Component>)
+    bool has_component(bool search_pending = true) const
+    {
+        std::type_index const type{ typeid(TComponent) };
+
+        // Check pending components. O(n), but this list is typically tiny
+        bool const is_pending = std::ranges::any_of(
+            m_pending_components,
+            [&type](std::shared_ptr<Component> const& pending)
+            {
+                return std::type_index{ typeid(*pending) } == type;
+            });
+
+        // Check already-initialized components. O(1)
+        bool const active = m_component_store.contains(type);
+
+        // (is_pending or active) if search_pending, else (active) 
+        return search_pending ? (is_pending || active) : active;
     }
 
 private:
@@ -215,18 +285,18 @@ private:
     /// @param [in] component            - Component that will be inserted into the collection.
     /// @param [in] insert_sorter        - The sorting order demarcation for the Component.
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    void insert_component_sorted(std::vector<Component*>& component_collection,
-                                 Component* component,
+    void insert_component_sorted(std::vector<std::weak_ptr<Component>>& component_collection,
+                                 std::weak_ptr<Component> component,
                                  EComponentInsertType insert_sorter);
     
     Layer& m_world;
     std::uint8_t m_update_order;
     EState m_state{ EState::Pending };
 
-    std::vector<std::unique_ptr<Component>> m_pending_components{};
-    std::unordered_map<std::type_index, std::unique_ptr<Component>> m_component_store{};
-    std::vector<Component*> m_update_ordered_components{};
-    std::vector<Component*> m_render_ordered_components{};
+    std::vector<std::shared_ptr<Component>> m_pending_components{};
+    std::unordered_map<std::type_index, std::shared_ptr<Component>> m_component_store{};
+    std::vector<std::weak_ptr<Component>> m_update_ordered_components{};
+    std::vector<std::weak_ptr<Component>> m_render_ordered_components{};
 };
 
 } // namespace Core

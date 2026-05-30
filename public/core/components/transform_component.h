@@ -33,20 +33,20 @@ public:
       , m_scale(scale)
     {
     }
-    TransformComponent(Entity& owning_entity,
-                       const glm::vec2& position,
-                       const glm::vec2& velocity = glm::vec2(0.0f, 0.0f),
-                       const glm::vec2& acceleration = glm::vec2(0.0f, 0.0f),
-                    //    float rotation = 0.0f,
-                       const glm::vec2& scale = glm::vec2(1.0f, 1.0f))
-        : Component(owning_entity)
-        , m_position(position)
-        , m_velocity(velocity)
-        , m_acceleration(acceleration)
-        //   m_rotation(rotation),
-        ,  m_scale(scale)
-    {
-    }
+    // TransformComponent(Entity& owning_entity,
+    //                    const glm::vec2& position,
+    //                    const glm::vec2& velocity = glm::vec2(0.0f, 0.0f),
+    //                    const glm::vec2& acceleration = glm::vec2(0.0f, 0.0f),
+    //                 //    float rotation = 0.0f,
+    //                    const glm::vec2& scale = glm::vec2(1.0f, 1.0f))
+    //     : Component(owning_entity)
+    //     , m_position(position)
+    //     , m_velocity(velocity)
+    //     , m_acceleration(acceleration)
+    //     //   m_rotation(rotation),
+    //     ,  m_scale(scale)
+    // {
+    // }
 
     ~TransformComponent() override = default;
 

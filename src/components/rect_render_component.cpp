@@ -1,0 +1,41 @@
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Copyright (C) 2026 AStruthers2000 - All Rights Reserved
+////////////////////////////////////////////////////////////////////////////////////////////////////
+#include "core/components/render_components/rect_render_component.h"
+
+#include "core/components/transform_component.h"
+
+namespace Core
+{
+
+//--------------------------------------------------------------------------------------------------
+RectRenderComponent::RectRenderComponent(Entity& owning_entity, Order const& component_order, SDL_Color rect_color)
+    : RenderComponent(owning_entity, component_order)
+    , m_color(rect_color)
+{
+}
+
+//--------------------------------------------------------------------------------------------------
+void RectRenderComponent::awake_component()
+{
+    m_owning_transform = get_sibling_component<TransformComponent>();
+}
+
+//--------------------------------------------------------------------------------------------------
+void RectRenderComponent::render_component(SDL_Renderer* renderer)
+{
+    if (auto transform = m_owning_transform.lock())
+    {
+        SDL_FRect dst{
+            .x = transform->get_position().x,
+            .y = transform->get_position().y,
+            .w = transform->get_scale().x,
+            .h = transform->get_scale().y,
+        };
+
+        SDL_SetRenderDrawColor(renderer, m_color.r, m_color.g, m_color.b, m_color.a);
+        SDL_RenderFillRect(renderer, &dst);
+    }
+}
+
+} // namespace Core

@@ -5,8 +5,8 @@
 ///        initialize_layer(), update_layer(), render_layer(), and/or cleanup_layer() for custom
 ///        behavior.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-#ifndef ENGINE_LAYER_H
-#define ENGINE_LAYER_H
+#ifndef CORE_LAYER_H
+#define CORE_LAYER_H
 
 #include <SDL3/SDL.h>
 
@@ -175,4 +175,4 @@ private:
 
 } // namespace Core
 
-#endif // ENGINE_LAYER_H
+#endif // CORE_LAYER_H

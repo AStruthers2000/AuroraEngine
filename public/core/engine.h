@@ -4,8 +4,8 @@
 /// @brief Main entrypoint for the application. The Engine is the root of the application structure.
 ///        There should only ever one instance of Engine.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-#ifndef ENGINE_ENGINE_H
-#define ENGINE_ENGINE_H
+#ifndef CORE_ENGINE_H
+#define CORE_ENGINE_H
 
 #include "core/layer.h"
 
@@ -151,4 +151,4 @@ private:
 
 } // namespace Core
 
-#endif // ENGINE_ENGINE_H
+#endif // CORE_ENGINE_H

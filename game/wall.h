@@ -7,30 +7,28 @@
 #ifndef PONG_WALL_H
 #define PONG_WALL_H
 
-// #include "better_game_object.h"
 #include "aurora_engine_public.h"
 
 class Wall : public Core::Entity
 {
 public:
     Wall(Core::Layer& owner, std::uint8_t update_order, glm::vec2 position, glm::vec2 scale);
-    // Wall(Core::GameWorld& owning_world, Core::TransformComponent const& initial_transform, GameMode& owning_mode, glm::vec2 const& scale, SDL_Color const& color, float elasticity = 1.f)
-    //     : BetterGameObject(owning_world, initial_transform, owning_mode, false)
-    //     , m_color(color)
-    //     , m_elasticity(elasticity)
-    // {
-    //     get_transform().set_scale(scale);
-    // }
-
     ~Wall() override = default;
 
-    void render_entity(SDL_Renderer* renderer) override;
-    // float elasticity() const { return m_elasticity; }
-
 private:
-    // SDL_Color m_color;
-    // float m_elasticity;
-    std::weak_ptr<Core::TransformComponent> m_transform{};
+    Core::Component::Order m_component_order
+    {
+        .update_order = Core::DEFAULT_SORTING_ORDER,
+        .render_order = Core::DEFAULT_SORTING_ORDER,
+    };
+
+    SDL_Color m_color
+    {
+        .r = 25,
+        .g = 83,
+        .b = 95,
+        .a = SDL_ALPHA_OPAQUE
+    };
 };
 
 

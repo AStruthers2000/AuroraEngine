@@ -14,7 +14,7 @@ public:
         std::println("Test component has been destroyed");
     }
 
-    virtual void initialize_component() override
+    virtual void awake_component() override
     {
         std::println("Test component initialized");
     }

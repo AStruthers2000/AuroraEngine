@@ -3,8 +3,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-#ifndef ENGINE_COMPONENTS_TRANSFORM_COMPONENT_H
-#define ENGINE_COMPONENTS_TRANSFORM_COMPONENT_H
+#ifndef CORE_COMPONENTS_TRANSFORM_COMPONENT_H
+#define CORE_COMPONENTS_TRANSFORM_COMPONENT_H
 
 #include "core/component.h"
 
@@ -80,4 +80,4 @@ private:
 
 } // namespace Core
 
-#endif // ENGINE_COMPONENTS_TRANSFORM_COMPONENT_H
+#endif // CORE_COMPONENTS_TRANSFORM_COMPONENT_H

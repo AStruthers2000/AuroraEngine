@@ -25,7 +25,7 @@ void Entity::awake()
             add_component<TransformComponent>();
         }
 
-        initialize_components();
+        awake_components();
         awake_entity();
         m_state = EState::Awoken;
     }
@@ -43,10 +43,43 @@ void Entity::awake_entity()
 }
 
 //--------------------------------------------------------------------------------------------------
+void Entity::awake_components()
+{
+    // Snapshot the pending list so we can track which components are newly added
+    std::vector<std::shared_ptr<Component>> newly_added{};
+    newly_added.swap(m_pending_components);
+
+    // Pass 1: flush ALL pending components into the active store before calling any virtual code.
+    // This guarantees every sibling is reachable via get_component<T>() during awake_component().
+    for (std::shared_ptr<Component> const& component : newly_added)
+    {
+        insert_component_sorted(m_update_ordered_components, component, EComponentInsertType::Update);
+        insert_component_sorted(m_render_ordered_components, component, EComponentInsertType::Render);
+        m_component_store.try_emplace(std::type_index(typeid(*component.get())), component);
+    }
+
+    // Pass 2: awake each newly-added component now that all siblings are in the active store.
+    for (std::shared_ptr<Component> const& component : newly_added)
+    {
+        component->awake();
+    }
+
+    // If this entity is already active (runtime component addition), immediately start them too.
+    if (m_state == EState::Active)
+    {
+        for (std::shared_ptr<Component> const& component : newly_added)
+        {
+            component->start();
+        }
+    }
+}
+
+//--------------------------------------------------------------------------------------------------
 void Entity::start()
 {
     if (m_state == EState::Awoken)
     {
+        start_components();
         start_entity();
         m_state = EState::Active;
     }
@@ -64,26 +97,21 @@ void Entity::start_entity()
 }
 
 //--------------------------------------------------------------------------------------------------
-void Entity::initialize_components()
+void Entity::start_components()
 {
-    for (std::shared_ptr<Component> component : m_pending_components)
+    for (std::weak_ptr<Component> const& component : m_update_ordered_components)
     {
-        // Initialize component
-        component->initialize();
-
-        // Move component to component store
-        insert_component_sorted(m_update_ordered_components, component, EComponentInsertType::Update);
-        insert_component_sorted(m_render_ordered_components, component, EComponentInsertType::Render);
-
-        m_component_store.try_emplace(std::type_index(typeid(*component.get())), std::move(component));
+        if (auto component_ptr = component.lock())
+        {
+            component_ptr->start();
+        }
     }
-    m_pending_components.clear();
 }
 
 //--------------------------------------------------------------------------------------------------
 void Entity::update(float delta_time)
 {
-    initialize_components();
+    awake_components();
     update_components(delta_time);
     update_entity(delta_time);
 }
@@ -135,6 +163,17 @@ void Entity::render_components(SDL_Renderer* renderer)
 void Entity::destroy_entity()
 {
     m_state = EState::Destroyed;
+}
+
+//--------------------------------------------------------------------------------------------------
+std::weak_ptr<Component> Entity::get_component_by_type(std::type_index type) const
+{
+    auto it = m_component_store.find(type);
+    if (it != m_component_store.end())
+    {
+        return it->second;
+    }
+    return std::weak_ptr<Component>();
 }
 
 //--------------------------------------------------------------------------------------------------

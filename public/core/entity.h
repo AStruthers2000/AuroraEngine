@@ -4,8 +4,8 @@
 /// @brief Base Entity class. Root of all objects in a Layer. Override initialize_entity(),
 ///        update_entity(), and/or render_entity() for custom behavior.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-#ifndef ENGINE_ENTITY_H
-#define ENGINE_ENTITY_H
+#ifndef CORE_ENTITY_H
+#define CORE_ENTITY_H
 
 #include "core/component.h"
 #include "core/layer.h"
@@ -93,7 +93,7 @@ public:
     /// @note Contract: all Entities that were pending in the same initialization pass have
     ///       completed awake_entity(), so their Components are fully initialized and accessible.
     ///       Use this override, rather than awake_entity(), for any setup that requires references
-    ///        to other Entities or their Components.
+    ///       to other Entities or their Components.
     ////////////////////////////////////////////////////////////////////////////////////////////////
     virtual void start_entity();
 
@@ -124,6 +124,11 @@ public:
     /// @param [in] renderer - Renderer provided by the owning Layer. 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     virtual void render_entity(SDL_Renderer* renderer);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Marks this Entity for destruction. Destruction occurs at the end of this frame.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void destroy_entity();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Adds a Component to this Entity. Constructs a Component of type TComponent,
@@ -170,30 +175,14 @@ public:
     // void remove_component(std::unique_ptr<Component> component);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Marks this Entity for destruction. Destruction occurs at the end of this frame.
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    void destroy_entity();
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @return Returns this Entity's update order.
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    std::uint8_t get_update_order() const { return m_update_order; }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @return Returns this Entity's current state.
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    EState get_entity_state() const { return m_state; }
-
-protected:
-    ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Tries to get the component of type TComponent owned by this Entity. Uses RTTI to
     ///        perform a O(1) lookup.
     ///
     /// @tparam TComponent Templated Component type to search for. Requires that this type is
     ///                    derived from Component.
     ///
-    /// @return Returns a raw pointer to the Component of type TComponent, or nullptr if no
-    ///         Component of that type was found.
+    /// @return Returns a raw pointer to the Component of type TComponent, or an empty
+    ///         std:::weak_ptr<TComponent> if no Component of that type was found.
     ////////////////////////////////////////////////////////////////////////////////////////////////
     template <typename TComponent>
     requires(std::derived_from<TComponent, Component>)
@@ -206,6 +195,17 @@ protected:
         }
         return std::weak_ptr<TComponent>();
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Non-template overload of get_component, used internally by Component to avoid a
+    ///        circular header dependency. Prefer get_component<T>() at all other call sites.
+    ///
+    /// @param [in] type - The std::type_index of the desired Component type.
+    ///
+    /// @return A std::weak_ptr<Component> to the Component, or an empty std:::weak_ptr<TComponent>
+    ///         if not found.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    std::weak_ptr<Component> get_component_by_type(std::type_index type) const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Searches for a component of the given TComponent type. Optionally searches through
@@ -243,6 +243,16 @@ protected:
         return search_pending ? (is_pending || active) : active;
     }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @return Returns this Entity's update order.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    std::uint8_t get_update_order() const { return m_update_order; }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @return Returns this Entity's current state.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    EState get_entity_state() const { return m_state; }
+
 private:
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Enum that allows insert_component_sorted() to gather the correct sorting order from
@@ -255,10 +265,18 @@ private:
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Initializes all the Components attached to this Entity. Called from
-    ///        Entity::initialize(). Not overridable. 
+    /// @brief Flushes all pending Components into the active component store, then calls
+    ///        Component::awake() on each newly-added Component. Two-pass: all components reach
+    ///        the active store before any awake_component() override runs, so siblings are always
+    ///        accessible via get_sibling_component<T>(). Not overridable.
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    void initialize_components();
+    void awake_components();
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Calls Component::start() on every active Component. Called from Entity::start()
+    ///        and for runtime-added Components once the Entity is Active. Not overridable.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void start_components();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Updates all the Components attached to the Entity. Called from Entity::update(). Not
@@ -301,4 +319,4 @@ private:
 
 } // namespace Core
 
-#endif // ENGINE_ENTITY_H
+#endif // CORE_ENTITY_H

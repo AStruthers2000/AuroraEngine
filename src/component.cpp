@@ -3,6 +3,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 #include "core/component.h"
 
+#include "core/entity.h"
+
 namespace Core
 {
 
@@ -24,13 +26,31 @@ Component::Component(Entity& owning_entity, Order const& component_order)
 Component::~Component() = default;
 
 //--------------------------------------------------------------------------------------------------
-void Component::initialize()
+std::weak_ptr<Component> Component::get_sibling_component_impl(std::type_index type) const
 {
-    initialize_component();
+    return m_owner.get_component_by_type(type);
 }
 
 //--------------------------------------------------------------------------------------------------
-void Component::initialize_component()
+void Component::awake()
+{
+    awake_component();
+}
+
+//--------------------------------------------------------------------------------------------------
+void Component::awake_component()
+{
+    // Intentionally left blank; virtual function.
+}
+
+//--------------------------------------------------------------------------------------------------
+void Component::start()
+{
+    start_component();
+}
+
+//--------------------------------------------------------------------------------------------------
+void Component::start_component()
 {
     // Intentionally left blank; virtual function.
 }

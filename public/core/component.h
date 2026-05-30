@@ -2,13 +2,16 @@
 /// Copyright (C) 2026 AStruthers2000 - All Rights Reserved
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief Base Component class. Components are owned by Entities and provide specializations of
-///        functionality. Override initialize_component(), update_component(), and/or
+///        functionality. Override awake_component(), start_component(), update_component(), and/or
 ///        render_component() for custom behavior.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-#ifndef ENGINE_COMPONENT_H
-#define ENGINE_COMPONENT_H
+#ifndef CORE_COMPONENT_H
+#define CORE_COMPONENT_H
 
 #include "core/layer.h"
+
+#include <memory>
+#include <typeindex>
 
 namespace Core
 {
@@ -53,16 +56,43 @@ public:
     virtual ~Component();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Initializes this Component. Called from owning Entity during Entity initialization.
-    ///        Not overridable.
+    /// @brief Phase 1 of Component initialization. Called from owning Entity after all pending
+    ///        Components have been flushed to the active store. Calls awake_component(). Not
+    ///        overridable.
+    ///
+    /// @note It is safe to call get_sibling_component<T>() here. All Components added during Entity
+    ///       construction are in the active store by the time this runs.
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    void initialize();
+    void awake();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Runs any Component-specific initialization code. Called from Component::initialize().
-    ///        Overridable.
+    /// @brief Runs any Component-specific Phase 1 initialization code. Called from
+    ///        Component::awake(). Overridable.
+    ///
+    /// @note Contract: all Components added during Entity construction are accessible via
+    ///       get_sibling_component<T>(). Do not access Components on other Entities here; their
+    ///       owning Entity's awake() is not guaranteed to have run yet.
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    virtual void initialize_component();
+    virtual void awake_component();
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Phase 2 of Component initialization. Called from owning Entity during
+    ///        Entity::start(), after all sibling Entities in the same initialization pass have
+    ///        awoken. Calls start_component(). Not overridable.
+    ///
+    /// @note It is safe to call get_sibling_component<T>() on other Entities here.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void start();
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Runs any Component-specific Phase 2 initialization code. Called from
+    ///        Component::start(). Overridable.
+    ///
+    /// @note Contract: all Entities that were pending in the same initialization pass have
+    ///       completed awake(), so their Components are fully initialized and accessible via
+    ///       get_sibling_component<T>() on the owning Entity.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    virtual void start_component();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Updates this Component. Called from owning Entity. Not overridable.
@@ -104,11 +134,31 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////
     std::uint8_t get_render_order() const { return m_order.render_order; }
 
+protected:
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Tries to get the Component of type TComponent owned by the same Entity as this
+    ///        Component. Delegates to the owning Entity's component store.
+    ///
+    /// @tparam TComponent Component type to search for. Must be derived from Component.
+    ///
+    /// @return A std::weak_ptr<TComponent> to the sibling Component, or an empty
+    ///         std::weak_ptr<TComponent> if no such Component exists on the owning Entity.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    template <typename TComponent>
+    requires(std::derived_from<TComponent, Component>)
+    std::weak_ptr<TComponent> get_sibling_component() const
+    {
+        return std::static_pointer_cast<TComponent>(
+            get_sibling_component_impl(std::type_index(typeid(TComponent))).lock());
+    }
+
 private:
+    std::weak_ptr<Component> get_sibling_component_impl(std::type_index type) const;
+
     Entity& m_owner;
     Order m_order;
 };
 
 } // namespace Core
 
-#endif // ENGINE_COMPONENT_H
+#endif // CORE_COMPONENT_H

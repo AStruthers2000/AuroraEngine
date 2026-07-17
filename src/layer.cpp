@@ -107,6 +107,14 @@ void Layer::update_entities(float delta_time)
     {
         entity.reset();
     }
+
+    m_entities.erase(
+        std::remove_if(m_entities.begin(), m_entities.end(),
+            [](auto const& entity)
+            {
+                return entity->get_entity_state() == Entity::EState::Destroyed;
+            }),
+        m_entities.end());
 }
 
 //--------------------------------------------------------------------------------------------------

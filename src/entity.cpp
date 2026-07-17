@@ -9,6 +9,7 @@ namespace Core
 //--------------------------------------------------------------------------------------------------
 Entity::Entity(Layer& owning_layer, std::uint8_t update_order)
     : m_owning_layer(owning_layer)
+    , m_update_order(update_order)
 {
 }
 
@@ -111,6 +112,8 @@ void Entity::start_components()
 //--------------------------------------------------------------------------------------------------
 void Entity::update(float delta_time)
 {
+    if (m_state != EState::Active) return;
+
     awake_components();
     update_components(delta_time);
     update_entity(delta_time);
@@ -137,6 +140,8 @@ void Entity::update_components(float delta_time)
 //--------------------------------------------------------------------------------------------------
 void Entity::render(SDL_Renderer* renderer)
 {
+    if (m_state != EState::Active) return;
+
     render_components(renderer);
     render_entity(renderer);
 }

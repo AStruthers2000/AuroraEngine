@@ -194,7 +194,7 @@ public:
         auto it = m_component_store.find(std::type_index(typeid(TComponent)));
         if (it != m_component_store.end())
         {
-            return static_cast<std::weak_ptr<TComponent>>(it->second.get());
+            return std::static_pointer_cast<TComponent>(it->second);
         }
         return std::weak_ptr<TComponent>();
     }

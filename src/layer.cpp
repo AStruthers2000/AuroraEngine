@@ -22,14 +22,14 @@ Layer::Layer(Engine& owning_engine)
 Layer::~Layer() = default;
 
 //--------------------------------------------------------------------------------------------------
-void Layer::initialize()
+void Layer::initialize_layer()
 {
     initialize_entities();
-    initialize_layer();
+    initialize();
 }
 
 //--------------------------------------------------------------------------------------------------
-void Layer::initialize_layer()
+void Layer::initialize()
 {
     // Intentionally left blank; virtual function.
 }
@@ -41,7 +41,7 @@ void Layer::initialize_entities()
     {
         if (entity->get_entity_state() == Entity::EState::Pending)
         {
-            entity->awake();
+            entity->awake_entity();
         }
         else
         {
@@ -55,7 +55,7 @@ void Layer::initialize_entities()
     {
         if (entity->get_entity_state() == Entity::EState::Awoken)
         {
-            entity->start();
+            entity->start_entity();
             move_entity_to_active(entity);
         }
         else
@@ -69,14 +69,23 @@ void Layer::initialize_entities()
 }
 
 //--------------------------------------------------------------------------------------------------
-void Layer::update(float delta_time)
+void Layer::update_layer(float delta_time)
 {
+    if (m_paused) return;
+
+    update(delta_time);
     update_entities(delta_time);
-    update_layer(delta_time);
+    late_update(delta_time);
 }
 
 //--------------------------------------------------------------------------------------------------
-void Layer::update_layer(float delta_time)
+void Layer::update(float delta_time)
+{
+    // Intentionally left blank; virtual function.
+}
+
+//--------------------------------------------------------------------------------------------------
+void Layer::late_update(float delta_time)
 {
     // Intentionally left blank; virtual function.
 }
@@ -90,42 +99,33 @@ void Layer::update_entities(float delta_time)
     // Update all entities
     for (auto const& entity : m_entities)
     {
-        entity->update(delta_time);
+        entity->update_entity(delta_time);
     }
 
-    // Release all entities marked for destruction
-    std::vector<std::shared_ptr<Entity>> destroyed_entities{};
-    for (auto const& entity : m_entities)
+    // Release all entities marked for destruction (calls cleanup before destroying)
+    for (auto it = m_entities.begin(); it != m_entities.end(); )
     {
-        if (entity->get_entity_state() == Entity::EState::Destroyed)
+        if ((*it)->get_entity_state() == Entity::EState::Destroyed)
         {
-            destroyed_entities.emplace_back(std::move(entity));
+            (*it)->cleanup_entity();
+            it = m_entities.erase(it);
+        }
+        else
+        {
+            ++it;
         }
     }
-
-    for (auto& entity : destroyed_entities)
-    {
-        entity.reset();
-    }
-
-    m_entities.erase(
-        std::remove_if(m_entities.begin(), m_entities.end(),
-            [](auto const& entity)
-            {
-                return entity->get_entity_state() == Entity::EState::Destroyed;
-            }),
-        m_entities.end());
-}
-
-//--------------------------------------------------------------------------------------------------
-void Layer::render(SDL_Renderer* renderer)
-{
-    render_entities(renderer);
-    render_layer(renderer);
 }
 
 //--------------------------------------------------------------------------------------------------
 void Layer::render_layer(SDL_Renderer* renderer)
+{
+    render_entities(renderer);
+    render(renderer);
+}
+
+//--------------------------------------------------------------------------------------------------
+void Layer::render(SDL_Renderer* renderer)
 {
     // Intentionally left blank; virtual function.
 }
@@ -135,19 +135,19 @@ void Layer::render_entities(SDL_Renderer* renderer)
 {
     for (auto const& entity : m_entities)
     {
-        entity->render(renderer);
+        entity->render_entity(renderer);
     }
 }
 
 //--------------------------------------------------------------------------------------------------
-void Layer::cleanup()
+void Layer::cleanup_layer()
 {
     cleanup_entities();
-    cleanup_layer();
+    cleanup();
 }
 
 //--------------------------------------------------------------------------------------------------
-void Layer::cleanup_layer()
+void Layer::cleanup()
 {
     // Intentionally left blank; virtual function.
 }
@@ -155,6 +155,10 @@ void Layer::cleanup_layer()
 //--------------------------------------------------------------------------------------------------
 void Layer::cleanup_entities()
 {
+    for (auto const& entity : m_entities)
+    {
+        entity->cleanup_entity();
+    }
     m_pending_entities.clear();
     m_entities.clear();
 }
@@ -175,6 +179,36 @@ void Layer::move_entity_to_active(std::shared_ptr<Entity> entity)
 
     // Insert before that element (or at the end if not found)
     m_entities.insert(it, std::move(entity));
+}
+
+//--------------------------------------------------------------------------------------------------
+void Layer::fixed_update_layer(float fixed_dt)
+{
+    if (m_paused) return;
+    fixed_update_entities(fixed_dt);
+    fixed_update(fixed_dt);
+}
+
+//--------------------------------------------------------------------------------------------------
+void Layer::fixed_update(float fixed_dt)
+{
+    // Intentionally left blank; virtual function.
+}
+
+//--------------------------------------------------------------------------------------------------
+void Layer::fixed_update_entities(float fixed_dt)
+{
+    for (auto const& entity : m_entities)
+    {
+        entity->fixed_update_entity(fixed_dt);
+    }
+}
+
+//--------------------------------------------------------------------------------------------------
+void Layer::on_entity_added() const
+{
+    assert(!Engine::get().is_rendering());
+    assert(!Engine::get().is_cleaning_up());
 }
 
 } // namespace Core

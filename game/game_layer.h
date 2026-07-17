@@ -10,10 +10,10 @@ public:
 
     ~GameLayer() override = default;
 
-    void initialize_layer() override;
-    void update_layer(float delta_time) override;
-    void render_layer(SDL_Renderer* renderer) override;
-    void cleanup_layer() override;
+    void initialize() override;
+    void update(float delta_time) override;
+    void render(SDL_Renderer* renderer) override;
+    void cleanup() override;
 
 private:
     constexpr static int wall_thickness{ 25 };

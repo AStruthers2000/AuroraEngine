@@ -32,49 +32,85 @@ std::weak_ptr<Component> Component::get_sibling_component_impl(std::type_index t
 }
 
 //--------------------------------------------------------------------------------------------------
-void Component::awake()
-{
-    awake_component();
-}
-
-//--------------------------------------------------------------------------------------------------
 void Component::awake_component()
 {
-    // Intentionally left blank; virtual function.
+    awake();
 }
 
 //--------------------------------------------------------------------------------------------------
-void Component::start()
+void Component::awake()
 {
-    start_component();
+    // Intentionally left blank; virtual function.
 }
 
 //--------------------------------------------------------------------------------------------------
 void Component::start_component()
 {
-    // Intentionally left blank; virtual function.
+    start();
 }
 
 //--------------------------------------------------------------------------------------------------
-void Component::update(float delta_time)
+void Component::start()
 {
-    update_component(delta_time);
+    // Intentionally left blank; virtual function.
 }
 
 //--------------------------------------------------------------------------------------------------
 void Component::update_component(float delta_time)
 {
+    update(delta_time);
+}
+
+//--------------------------------------------------------------------------------------------------
+void Component::update(float delta_time)
+{
     // Intentionally left blank; virtual function.
+}
+
+//--------------------------------------------------------------------------------------------------
+void Component::render_component(SDL_Renderer* renderer)
+{
+    render(renderer);
 }
 
 //--------------------------------------------------------------------------------------------------
 void Component::render(SDL_Renderer* renderer)
 {
-    render_component(renderer);
+    // Intentionally left blank; virtual function.
 }
 
 //--------------------------------------------------------------------------------------------------
-void Component::render_component(SDL_Renderer* renderer)
+void Component::late_update_component(float delta_time)
+{
+    late_update(delta_time);
+}
+
+//--------------------------------------------------------------------------------------------------
+void Component::late_update(float delta_time)
+{
+    // Intentionally left blank; virtual function.
+}
+
+//--------------------------------------------------------------------------------------------------
+void Component::fixed_update_component(float fixed_dt)
+{
+    fixed_update(fixed_dt);
+}
+
+//--------------------------------------------------------------------------------------------------
+void Component::fixed_update(float fixed_dt)
+{
+    // Intentionally left blank; virtual function.
+}
+
+//--------------------------------------------------------------------------------------------------
+void Component::cleanup_component()
+{
+    cleanup();
+}
+
+//--------------------------------------------------------------------------------------------------
+void Component::cleanup()
 {
     // Intentionally left blank; virtual function.
 }

@@ -10,6 +10,7 @@
 
 #include <glm/glm.hpp>
 
+#include <cassert>
 #include <memory>
 #include <string>
 #include <vector>
@@ -81,19 +82,81 @@ public:
     void stop();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Pushes a Layer to the Layer stack. The Layer is constructed from the template
-    ///        parameter, so callers only need to provide the type of layer in TLayer. This
-    ///        structure assumes that there will never be any custom arguments into a Layer's
-    ///        constructor.
+    /// @brief Pushes a Layer to the Layer stack and returns a weak_ptr to the new Layer.
     ///
-    /// @tparam TLayer - The type of Layer to be pushed to the stack.  
+    /// @tparam TLayer - The type of Layer to be pushed to the stack.
+    ///
+    /// @return A std::weak_ptr<TLayer> to the newly created Layer.
     ////////////////////////////////////////////////////////////////////////////////////////////////
     template<typename TLayer>
     requires(std::is_base_of_v<Layer, TLayer>)
-    void push_layer()
+    std::weak_ptr<TLayer> push_layer()
     {
-        m_pending_layers.push_back(std::make_shared<TLayer>(get()));
+        assert(!is_cleaning_up());
+        assert(!is_rendering());
+        auto layer = std::make_shared<TLayer>(get());
+        std::weak_ptr<TLayer> result = layer;
+        m_pending_layers.push_back(std::move(layer));
+        return result;
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Removes the top-most Layer from the stack. Deferred until the next frame.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void pop_layer();
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Removes a specific Layer from the stack. Deferred until the next frame.
+    ///
+    /// @param [in] layer - Weak pointer to the Layer to remove.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void remove_layer(std::weak_ptr<Layer> layer);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Replaces the given anchor Layer with a newly constructed Layer of type TLayer.
+    ///        The anchor is cleaned up and removed; the new Layer is initialized in its place.
+    ///        Deferred until the next frame.
+    ///
+    /// @tparam TLayer  - The type of Layer to construct as the replacement.
+    /// @param  anchor  - The Layer to replace. Must be in the active layer stack.
+    ///
+    /// @return A std::weak_ptr<TLayer> to the newly created replacement Layer.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    template<typename TLayer>
+    requires(std::is_base_of_v<Layer, TLayer>)
+    std::weak_ptr<TLayer> transition_layer(Layer& anchor)
+    {
+        assert(!is_cleaning_up());
+        assert(!is_rendering());
+        auto new_layer = std::make_shared<TLayer>(get());
+        std::weak_ptr<TLayer> result = new_layer;
+        m_pending_transitions.push_back({ anchor.weak_from_this(), std::move(new_layer) });
+        return result;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Sets the fixed timestep used for fixed_update passes.
+    ///
+    /// @param [in] seconds - Desired fixed timestep in seconds (e.g. 1.f/60.f for 60 Hz).
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void set_fixed_timestep(float seconds) { m_fixed_step = seconds; }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @return Returns true if the Engine is currently executing a render pass. Adding entities
+    ///         or components while this returns true is not allowed.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    bool is_rendering() const { return m_is_rendering; }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @return Returns true if the Engine is currently executing an update pass.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    bool is_updating() const { return m_is_updating; }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @return Returns true if the Engine destructor is running. Treat this as a hard shutdown;
+    ///         engine-mutating calls must not be made during cleanup.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    bool is_cleaning_up() const { return m_is_cleaning_up; }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @return Returns the static Engine instance.
@@ -125,6 +188,19 @@ private:
     void initialize_pending_layers();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Processes all deferred layer transitions (pop, remove, transition_layer).
+    ///        Called once per frame before initialize_pending_layers().
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void apply_pending_transitions();
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Runs one fixed-timestep update tick over all layers.
+    ///
+    /// @param [in] fixed_dt - The fixed timestep interval.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void fixed_update(float fixed_dt);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Processes all input, draining the SDL event queue. TODO: A lot more is needed here.
     ///
     /// @return Returns true if the Engine should quit (i.e. SDL_EVENT_QUIT was received during this
@@ -146,8 +222,21 @@ private:
     void render();
 
     bool m_running = false;
+    bool m_is_rendering{ false };
+    bool m_is_updating{ false };
+    bool m_is_cleaning_up{ false };
+    float m_fixed_step{ 1.f / 60.f };
+    float m_accumulator{ 0.f };
+
     std::unique_ptr<Window> m_window;
 
+    struct PendingTransition
+    {
+        std::weak_ptr<Layer> anchor;   ///< Layer to remove (nullptr anchor = pop_layer).
+        std::shared_ptr<Layer> new_layer; ///< Replacement Layer, or nullptr for a pure removal.
+    };
+
+    std::vector<PendingTransition>    m_pending_transitions;
     std::vector<std::shared_ptr<Layer>> m_pending_layers;
     std::vector<std::shared_ptr<Layer>> m_layer_stack;
 };

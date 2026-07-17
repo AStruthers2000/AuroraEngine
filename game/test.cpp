@@ -14,19 +14,34 @@ public:
         std::println("Test component has been destroyed");
     }
 
-    virtual void awake_component() override
+    virtual void awake() override
     {
         std::println("Test component initialized");
     }
 
-    virtual void update_component(float delta_time) override
+    virtual void update(float delta_time) override
     {
         std::println("Test component updating");
     }
 
-    virtual void render_component(SDL_Renderer* renderer) override
+    virtual void late_update(float delta_time) override
+    {
+        std::println("Test component late updating");
+    }
+
+    virtual void fixed_update(float fixed_dt) override
+    {
+        std::println("Test component fixed updating");
+    }
+
+    virtual void render(SDL_Renderer* renderer) override
     {
         std::println("Test component rendering");
+    }
+
+    virtual void cleanup() override
+    {
+        std::println("Test component cleaning up");
     }
 };
 
@@ -35,7 +50,7 @@ class TestEntity : public Core::Entity
 public:
     TestEntity(Core::Layer& owner) : Core::Entity(owner)
     {
-        add_component(std::make_unique<TestComponent>(*this));
+        add_component<TestComponent>();
     }
 
     virtual ~TestEntity()
@@ -43,25 +58,40 @@ public:
         std::println("Test entity has been destroyed");
     }
 
-    virtual void initialize_entity() override
+    virtual void awake() override
     {
-        add_component(std::make_unique<TestComponent>(*this));
+        add_component<TestComponent>();
         std::println("Test entity initialized");
     }
 
-    virtual void update_entity(float delta_time) override
+    virtual void update(float delta_time) override
     {
         static int added{ -1000 };
         if (added++ == 0)
         {
-            add_component(std::make_unique<TestComponent>(*this));
+            add_component<TestComponent>();
         }
         std::println("Test entity updating");
     }
 
-    virtual void render_entity(SDL_Renderer* renderer) override
+    virtual void late_update(float delta_time) override
+    {
+        std::println("Test entity late updating");
+    }
+
+    virtual void fixed_update(float fixed_dt) override
+    {
+        std::println("Test entity fixed updating");
+    }
+
+    virtual void render(SDL_Renderer* renderer) override
     {
         std::println("Test entity rendering");
+    }
+
+    virtual void cleanup() override
+    {
+        std::println("Test entity cleaning up");
     }
 };
 
@@ -72,23 +102,33 @@ public:
     {
     }
 
-    virtual void initialize_layer() override
+    virtual void initialize() override
     {
         std::println("Test layer initialized");
-        add_entity(std::make_unique<TestEntity>(*this));
+        add_entity<TestEntity>();
     }
 
-    virtual void update_layer(float delta_time) override
+    virtual void update(float delta_time) override
     {
         std::println("Test layer updating");
     }
 
-    virtual void render_layer(SDL_Renderer* renderer) override
+    virtual void late_update(float delta_time) override
+    {
+        std::println("Test layer late updating");
+    }
+
+    virtual void fixed_update(float fixed_dt) override
+    {
+        std::println("Test layer fixed updating");
+    }
+
+    virtual void render(SDL_Renderer* renderer) override
     {
         std::println("Test layer rendering");
     }
 
-    virtual void cleanup_layer() override
+    virtual void cleanup() override
     {
         std::println("Test layer cleaning up");
     }

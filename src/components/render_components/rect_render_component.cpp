@@ -16,13 +16,13 @@ RectRenderComponent::RectRenderComponent(Entity& owning_entity, Order const& com
 }
 
 //--------------------------------------------------------------------------------------------------
-void RectRenderComponent::awake_component()
+void RectRenderComponent::awake()
 {
     m_owning_transform = get_sibling_component<TransformComponent>();
 }
 
 //--------------------------------------------------------------------------------------------------
-void RectRenderComponent::render_component(SDL_Renderer* renderer)
+void RectRenderComponent::render(SDL_Renderer* renderer)
 {
     if (auto transform = m_owning_transform.lock())
     {

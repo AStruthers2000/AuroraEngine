@@ -24,8 +24,8 @@ namespace Core
 {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// @brief Base Entity class. Root of all objects in a Layer. Override initialize_entity(),
-///        update_entity(), and/or render_entity() for custom behavior.
+/// @brief Base Entity class. Root of all objects in a Layer. Override awake(), start(),
+///        update(), and/or render() for custom behavior.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 class Entity
 {
@@ -35,14 +35,14 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////
     enum class EState
     {
-        Active,     ///< Entity is in the "normal" state; Entity::update() is called every tick.
-        Inactive,   ///< Entity is paused. Entity::update() will not be called, but the Entity can
-                    ///< return to the Active state with no overhead.
+        Active,     ///< Entity is in the "normal" state; Entity::update_entity() is called every tick.
+        Inactive,   ///< Entity is paused. Entity::update_entity() will not be called, but the Entity
+                    ///< can return to the Active state with no overhead.
         Pending,    ///< Entity has been constructed but not yet awoken. On the next initialization
-                    ///< pass, Entity::awake() will be called, transitioning to Awoken.
-        Awoken,     ///< Entity has completed awake() but has not yet started. All Components are
-                    ///< initialized and accessible. Entity::start() will be called once all sibling
-                    ///< Entities in the owning Layer have also awoken.
+                    ///< pass, Entity::awake_entity() will be called, transitioning to Awoken.
+        Awoken,     ///< Entity has completed its awake phase but has not yet started. All Components
+                    ///< are initialized and accessible. Entity::start_entity() will be called once
+                    ///< all sibling Entities in the owning Layer have also awoken.
         Destroyed,  ///< Entity has been marked for destruction. Entity::~Entity() will be called on
                     ///< the next update cycle
     };
@@ -61,72 +61,139 @@ public:
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Phase 1 of Entity initialization. Flushes all pending Components into the Component
-    ///        store and calls awake_entity(). Transitions state from Pending to Awoken. Not
-    ///        overridable.
+    ///        store and calls awake(). Transitions state from Pending to Awoken. Not overridable.
     ///
-    /// @note Called by the owning Layer before start(). Guaranteed to be called before any Entity
-    ///       in the Layer calls start(), which means awake_entity() overrides must not assume other
-    ///       Entities have awoken yet.
+    /// @note Called by the owning Layer before start_entity(). Guaranteed to be called before any
+    ///       Entity in the Layer calls start_entity(), which means awake() overrides must not assume
+    ///       other Entities have awoken yet.
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    void awake();
+    void awake_entity();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Runs any Entity-specific Phase 1 initialization code. Called from Entity::awake().
-    ///        Overridable.
+    /// @brief Runs any Entity-specific Phase 1 initialization code. Called from
+    ///        Entity::awake_entity(). Overridable.
     ///
     /// @note Contract: all Components added during construction are accessible via
     ///       get_component<T>(). Do not access Components or state on other Entities here; their
-    ///       awake() is not guaranteed to have run yet.
+    ///       awake_entity() is not guaranteed to have run yet.
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    virtual void awake_entity();
+    virtual void awake();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Phase 2 of Entity initialization. Calls start_entity() and transitions state from
-    ///        Awoken to Active. Not overridable.
+    /// @brief Phase 2 of Entity initialization. Calls start() and transitions state from Awoken
+    ///        to Active. Not overridable.
     ///
     /// @note Called by the owning Layer after every pending Entity in the same initialization pass
-    ///       has completed awake(). It is safe to access other Entities and their Components here.
+    ///       has completed awake_entity(). It is safe to access other Entities and their Components
+    ///       here.
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    void start();
+    void start_entity();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Runs any Entity-specific Phase 2 initialization code. Called from Entity::start().
-    ///        Overridable.
+    /// @brief Runs any Entity-specific Phase 2 initialization code. Called from
+    ///        Entity::start_entity(). Overridable.
     ///
     /// @note Contract: all Entities that were pending in the same initialization pass have
-    ///       completed awake_entity(), so their Components are fully initialized and accessible.
-    ///       Use this override, rather than awake_entity(), for any setup that requires references
-    ///       to other Entities or their Components.
+    ///       completed their awake phase. It is safe to access other Entities and their Components.
+    ///       Use this override, rather than awake(), for any setup that requires references to
+    ///       other Entities or their Components.
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    virtual void start_entity();
+    virtual void start();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Updates this Entity. Called from owning Layer. Not overridable.
     ///
-    /// @param [in] delta_time - Time since last update. 
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    void update(float delta_time);
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Runs any Entity-specific update code. Called from Entity::update(). Overridable.
+    /// @note Also runs late_update() on the Entity and late_update_component() on all attached
+    ///       Components after the main update pass completes.
     ///
     /// @param [in] delta_time - Time since last update. 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    virtual void update_entity(float delta_time);
+    void update_entity(float delta_time);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Runs any Entity-specific update code. Called from Entity::update_entity().
+    ///        Overridable.
+    ///
+    /// @param [in] delta_time - Time since last update. 
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    virtual void update(float delta_time);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Renders this Entity. Called from owning Layer. Not overridable.
     ///
-    /// @param [in] renderer - Renderer provided by the owning Layer. 
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    void render(SDL_Renderer* renderer);
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Runs any Entity-specific render code. Called from Entity::render(). Overridable.
+    /// @note Active and Inactive entities both render. Only Pending, Awoken, and Destroyed
+    ///       entities are skipped.
     ///
     /// @param [in] renderer - Renderer provided by the owning Layer. 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    virtual void render_entity(SDL_Renderer* renderer);
+    void render_entity(SDL_Renderer* renderer);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Runs any Entity-specific render code. Called from Entity::render_entity().
+    ///        Overridable.
+    ///
+    /// @note Must not call destroy_entity(), add_component(), or any other state-mutating
+    ///       engine method. Rendering must be a read-only pass over Entity state.
+    ///
+    /// @param [in] renderer - Renderer provided by the owning Layer. 
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    virtual void render(SDL_Renderer* renderer);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Sets this Entity to the Active state, allowing update_entity() to run. Has no
+    ///        effect if the Entity is in the Pending or Destroyed state.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void set_active();
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Sets this Entity to the Inactive state. While inactive, update_entity() is skipped
+    ///        but render_entity() continues to run. Has no effect if the Entity is in the Pending
+    ///        or Destroyed state.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void set_inactive();
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Runs any Entity-specific late-update code. Called from Entity::update_entity(),
+    ///        after update(). Overridable.
+    ///
+    /// @note Executes before component late_update(). Use this to finalize per-Entity state
+    ///       before attached Components read it in their late_update() (e.g. a camera component
+    ///       that must see a fully-resolved position).
+    ///
+    /// @param [in] delta_time - Time since last update.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    virtual void late_update(float delta_time);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Fixed-rate updates this Entity. Called from owning Layer at a fixed timestep
+    ///        independent of frame rate. Not overridable.
+    ///
+    /// @param [in] fixed_dt - The fixed timestep interval.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void fixed_update_entity(float fixed_dt);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Runs any Entity-specific fixed-rate update code. Called from
+    ///        Entity::fixed_update_entity(). Overridable.
+    ///
+    /// @param [in] fixed_dt - The fixed timestep interval.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    virtual void fixed_update(float fixed_dt);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Cleans up this Entity. Called by the owning Layer before the Entity is destroyed.
+    ///        Not overridable.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void cleanup_entity();
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Runs any Entity-specific cleanup code. Called from Entity::cleanup_entity().
+    ///        Overridable.
+    ///
+    /// @note All Components are still accessible during this call. Component cleanup runs
+    ///       after this returns. Do not call add_component() or destroy_entity() here.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    virtual void cleanup();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Marks this Entity for destruction. Destruction occurs at the end of this frame.
@@ -164,6 +231,7 @@ public:
         }
         else
         {
+            on_component_added();
             auto component_ptr = std::make_shared<TComponent>(*this, std::forward<Args>(args)...);
             m_pending_components.push_back(component_ptr);
             rtn = component_ptr;
@@ -293,14 +361,11 @@ private:
     /// @param [in] delta_time - Time since last update. 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     void update_components(float delta_time);
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Renders all the Components attached to the Entity. Called from Entity::render(). Not
-    ///        overridable.
-    ///
-    /// @param [in] renderer - Renderer provided by the owning Layer. 
-    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void late_update_components(float delta_time);
+    void fixed_update_components(float fixed_dt);
     void render_components(SDL_Renderer* renderer);
+    void cleanup_components();
+    void on_component_added() const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Inserts a Component into one of the Component collections based on a given sorting

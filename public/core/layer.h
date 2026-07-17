@@ -23,8 +23,8 @@ class Entity;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief Base Layer class. Owns Entities and updates them as part of the core Engine. Override
-///        initialize_layer(), update_layer(), render_layer(), and/or cleanup_layer() for custom
-///        behavior.
+///        initialize(), update(), late_update(), fixed_update(), render(), and/or cleanup() for
+///        custom behavior.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 class Layer : public std::enable_shared_from_this<Layer>
 {
@@ -44,52 +44,89 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Initializes this Layer. Initializes all currently-pending Entities. Not overridable.
     //////////////////////////////////////////////////////////////////////////////////////////////// 
-    void initialize();
+    void initialize_layer();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Runs any Layer-specific initialization code. Called from Layer::initialize().
+    /// @brief Runs any Layer-specific initialization code. Called from Layer::initialize_layer().
     ///        Overridable.
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    virtual void initialize_layer();
+    virtual void initialize();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Updates this Layer. Called from owning Engine. Not overridable.
     ///
     /// @param [in] delta_time - Time since last update. 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    void update(float delta_time);
+    void update_layer(float delta_time);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Runs any Layer-specific update code. Called from Layer::update(). Overridable.
+    /// @brief Runs any Layer-specific update code. Called from Layer::update_layer(). Overridable.
     ///
     /// @param [in] delta_time - Time since last update. 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    virtual void update_layer(float delta_time);
+    virtual void update(float delta_time);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Runs any Layer-specific late-update code. Called from Layer::update_layer(), after
+    ///        update() and after all Entity and Component late updates. Overridable.
+    ///
+    /// @param [in] delta_time - Time since last update.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    virtual void late_update(float delta_time);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Fixed-rate updates this Layer. Called from owning Engine at a fixed timestep. Not
+    ///        overridable. Skipped when the Layer is paused.
+    ///
+    /// @param [in] fixed_dt - The fixed timestep interval.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void fixed_update_layer(float fixed_dt);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Runs any Layer-specific fixed-rate update code. Called from
+    ///        Layer::fixed_update_layer(). Overridable.
+    ///
+    /// @param [in] fixed_dt - The fixed timestep interval.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    virtual void fixed_update(float fixed_dt);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Pauses or unpauses this Layer. When paused, update_layer() and fixed_update_layer()
+    ///        are skipped entirely. Render continues to run.
+    ///
+    /// @param [in] paused - true to pause, false to unpause.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void set_paused(bool paused) { m_paused = paused; }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @return Returns true if this Layer is currently paused.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    bool is_paused() const { return m_paused; }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Renders this Layer. Called from owning Engine. Not overridable.
     ///
     /// @param [in] renderer - Renderer provided by the owning Engine. 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    void render(SDL_Renderer* renderer);
+    void render_layer(SDL_Renderer* renderer);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Runs any Layer-specific render code. Called from Layer::render(). Overridable.
+    /// @brief Runs any Layer-specific render code. Called from Layer::render_layer(). Overridable.
     ///
     /// @param [in] renderer - Renderer provided by the owning Engine. 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    virtual void render_layer(SDL_Renderer* renderer);
+    virtual void render(SDL_Renderer* renderer);
     
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Cleans up this Layer instance. Called from owning Engine. Not overridable.
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    void cleanup();
+    void cleanup_layer();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Runs any Layer-specific cleanup code. Called from Layer::cleanup().
+    /// @brief Runs any Layer-specific cleanup code. Called from Layer::cleanup_layer().
     ///        Overridable.
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    virtual void cleanup_layer();
+    virtual void cleanup();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Adds an Entity to this Layer. Layer assumes ownership of the Entity. Entities are
@@ -118,6 +155,7 @@ public:
     requires(std::derived_from<TEntity, Entity>)
     std::weak_ptr<TEntity> add_entity(Args&&... args)
     {
+        on_entity_added();
         auto entity_ptr = std::make_shared<TEntity>(*this, std::forward<Args>(args)...);
         m_pending_entities.push_back(entity_ptr);
         return entity_ptr;
@@ -136,13 +174,13 @@ public:
 
 private:
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Initializes all the Entities owned by this Layer. Called from Layer::initialize().
-    ///        Not overridable.
+    /// @brief Initializes all the Entities owned by this Layer. Called from
+    ///        Layer::initialize_layer(). Not overridable.
     ////////////////////////////////////////////////////////////////////////////////////////////////
     void initialize_entities();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Updates all the Entities owned by this Layer. Called from Layer::update(). Not
+    /// @brief Updates all the Entities owned by this Layer. Called from Layer::update_layer(). Not
     ///        overridable.
     ///
     /// @param [in] delta_time - Time since last update. 
@@ -150,7 +188,14 @@ private:
     void update_entities(float delta_time);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Renders all the Entities owned by this Layer. Called from Layer::render(). Not
+    /// @brief Fixed-updates all Entities. Called from Layer::fixed_update_layer(). Not overridable.
+    ///
+    /// @param [in] fixed_dt - The fixed timestep interval.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void fixed_update_entities(float fixed_dt);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Renders all the Entities owned by this Layer. Called from Layer::render_layer(). Not
     ///        overridable.
     ///
     /// @param [in] renderer - Renderer provided by the owning Engine. 
@@ -158,10 +203,15 @@ private:
     void render_entities(SDL_Renderer* renderer);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Cleans up all the Entities owned by this Layer. Called from Layer::cleanup(). Not
-    ///        overridable.
+    /// @brief Cleans up all the Entities owned by this Layer. Called from
+    ///        Layer::cleanup_layer(). Not overridable.
     ////////////////////////////////////////////////////////////////////////////////////////////////
     void cleanup_entities();
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Called from add_entity<T>(). Asserts the engine is not rendering or cleaning up.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void on_entity_added() const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Moves an Entity from the pending Entities collection into the active Entities
@@ -172,6 +222,7 @@ private:
     void move_entity_to_active(std::shared_ptr<Entity> entity);
 
     Engine& m_engine;
+    bool m_paused{ false };
 
     std::vector<std::shared_ptr<Entity>> m_pending_entities{};
     std::vector<std::shared_ptr<Entity>> m_entities{};

@@ -25,19 +25,19 @@ GameLayer::GameLayer(Core::Engine& owner)
 }
 
 //--------------------------------------------------------------------------------------------------
-void GameLayer::initialize_layer()
+void GameLayer::initialize()
 {
 
 }
 
 //--------------------------------------------------------------------------------------------------
-void GameLayer::update_layer(float delta_time)
+void GameLayer::update(float delta_time)
 {
 
 }
 
 //--------------------------------------------------------------------------------------------------
-void GameLayer::render_layer(SDL_Renderer* renderer)
+void GameLayer::render(SDL_Renderer* renderer)
 {
     SDL_FRect logical_resolution;
     SDL_GetRenderLogicalPresentationRect(renderer, &logical_resolution);
@@ -60,7 +60,7 @@ void GameLayer::render_layer(SDL_Renderer* renderer)
 }
 
 //--------------------------------------------------------------------------------------------------
-void GameLayer::cleanup_layer()
+void GameLayer::cleanup()
 {
 
 }

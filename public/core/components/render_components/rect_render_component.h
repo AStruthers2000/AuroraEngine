@@ -36,7 +36,7 @@ public:
     /// @brief Initializes this render component by getting a reference to the sibling
     ///        TransformComponent.
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    virtual void awake_component() override;
+    virtual void awake() override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Renders a filled rectangle to the screen. Uses the sibling TransformComponent to
@@ -44,7 +44,7 @@ public:
     ///
     /// @param [in] renderer - Renderer provided by the owning Entity. 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    virtual void render_component(SDL_Renderer* renderer) override;
+    virtual void render(SDL_Renderer* renderer) override;
 
 private:
     SDL_Color m_color{};

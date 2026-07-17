@@ -2,6 +2,7 @@
 /// Copyright (C) 2026 AStruthers2000 - All Rights Reserved
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 #include "core/entity.h"
+#include "core/engine.h"
 
 namespace Core
 {
@@ -14,31 +15,31 @@ Entity::Entity(Layer& owning_layer, std::uint8_t update_order)
 }
 
 //--------------------------------------------------------------------------------------------------
-void Entity::awake()
+void Entity::awake_entity()
 {
     if (m_state == EState::Pending)
     {
         // Try to add a TransformComponent right before initializing components. This allows the
         // user to add their own transform component during construction if they'd like, but
-        // guarantees that the Entity will have a transform component before awake_entity().
+        // guarantees that the Entity will have a transform component before awake().
         if (!has_component<TransformComponent>())
         {
             add_component<TransformComponent>();
         }
 
         awake_components();
-        awake_entity();
+        awake();
         m_state = EState::Awoken;
     }
     else
     {
-        std::println("[Entity::awake] awake() called in unexpected state: %d",
+        std::println("[Entity::awake_entity] awake_entity() called in unexpected state: %d",
                      static_cast<int>(m_state));
     }
 }
 
 //--------------------------------------------------------------------------------------------------
-void Entity::awake_entity()
+void Entity::awake()
 {
     // Intentionally left blank; virtual function.
 }
@@ -46,6 +47,8 @@ void Entity::awake_entity()
 //--------------------------------------------------------------------------------------------------
 void Entity::awake_components()
 {
+    if (m_pending_components.empty()) return;
+
     // Snapshot the pending list so we can track which components are newly added
     std::vector<std::shared_ptr<Component>> newly_added{};
     newly_added.swap(m_pending_components);
@@ -62,7 +65,7 @@ void Entity::awake_components()
     // Pass 2: awake each newly-added component now that all siblings are in the active store.
     for (std::shared_ptr<Component> const& component : newly_added)
     {
-        component->awake();
+        component->awake_component();
     }
 
     // If this entity is already active (runtime component addition), immediately start them too.
@@ -70,29 +73,29 @@ void Entity::awake_components()
     {
         for (std::shared_ptr<Component> const& component : newly_added)
         {
-            component->start();
+            component->start_component();
         }
     }
 }
 
 //--------------------------------------------------------------------------------------------------
-void Entity::start()
+void Entity::start_entity()
 {
     if (m_state == EState::Awoken)
     {
         start_components();
-        start_entity();
+        start();
         m_state = EState::Active;
     }
     else
     {
-        std::println("[Entity::start] start() called in unexpected state: %d",
+        std::println("[Entity::start_entity] start_entity() called in unexpected state: %d",
                      static_cast<int>(m_state));
     }
 }
 
 //--------------------------------------------------------------------------------------------------
-void Entity::start_entity()
+void Entity::start()
 {
     // Intentionally left blank; virtual function.
 }
@@ -104,23 +107,25 @@ void Entity::start_components()
     {
         if (auto component_ptr = component.lock())
         {
-            component_ptr->start();
+            component_ptr->start_component();
         }
     }
 }
 
 //--------------------------------------------------------------------------------------------------
-void Entity::update(float delta_time)
+void Entity::update_entity(float delta_time)
 {
     if (m_state != EState::Active) return;
 
     awake_components();
     update_components(delta_time);
-    update_entity(delta_time);
+    update(delta_time);
+    late_update_components(delta_time);
+    late_update(delta_time);
 }
 
 //--------------------------------------------------------------------------------------------------
-void Entity::update_entity(float delta_time)
+void Entity::update(float delta_time)
 {
     // Intentionally left blank; virtual function.
 }
@@ -138,16 +143,16 @@ void Entity::update_components(float delta_time)
 }
 
 //--------------------------------------------------------------------------------------------------
-void Entity::render(SDL_Renderer* renderer)
+void Entity::render_entity(SDL_Renderer* renderer)
 {
-    if (m_state != EState::Active) return;
+    if (m_state != EState::Active && m_state != EState::Inactive) return;
 
     render_components(renderer);
-    render_entity(renderer);
+    render(renderer);
 }
 
 //--------------------------------------------------------------------------------------------------
-void Entity::render_entity(SDL_Renderer* renderer)
+void Entity::render(SDL_Renderer* renderer)
 {
     // Intentionally left blank; virtual function.
 }
@@ -167,6 +172,7 @@ void Entity::render_components(SDL_Renderer* renderer)
 //--------------------------------------------------------------------------------------------------
 void Entity::destroy_entity()
 {
+    assert(!Engine::get().is_rendering());
     m_state = EState::Destroyed;
 }
 
@@ -224,6 +230,97 @@ void Entity::insert_component_sorted(std::vector<std::weak_ptr<Component>>& comp
         });
 
     component_collection.insert(it, component);
+}
+
+//--------------------------------------------------------------------------------------------------
+void Entity::set_active()
+{
+    if (m_state == EState::Pending || m_state == EState::Destroyed) return;
+    m_state = EState::Active;
+}
+
+//--------------------------------------------------------------------------------------------------
+void Entity::set_inactive()
+{
+    if (m_state == EState::Pending || m_state == EState::Destroyed) return;
+    m_state = EState::Inactive;
+}
+
+//--------------------------------------------------------------------------------------------------
+void Entity::late_update(float delta_time)
+{
+    // Intentionally left blank; virtual function.
+}
+
+//--------------------------------------------------------------------------------------------------
+void Entity::late_update_components(float delta_time)
+{
+    for (std::weak_ptr<Component> component : m_update_ordered_components)
+    {
+        if (auto component_ptr = component.lock())
+        {
+            component_ptr->late_update_component(delta_time);
+        }
+    }
+}
+
+//--------------------------------------------------------------------------------------------------
+void Entity::fixed_update_entity(float fixed_dt)
+{
+    if (m_state != EState::Active) return;
+
+    fixed_update_components(fixed_dt);
+    fixed_update(fixed_dt);
+}
+
+//--------------------------------------------------------------------------------------------------
+void Entity::fixed_update(float fixed_dt)
+{
+    // Intentionally left blank; virtual function.
+}
+
+//--------------------------------------------------------------------------------------------------
+void Entity::fixed_update_components(float fixed_dt)
+{
+    for (std::weak_ptr<Component> component : m_update_ordered_components)
+    {
+        if (auto component_ptr = component.lock())
+        {
+            component_ptr->fixed_update_component(fixed_dt);
+        }
+    }
+}
+
+//--------------------------------------------------------------------------------------------------
+void Entity::cleanup_entity()
+{
+    cleanup();
+    cleanup_components();
+}
+
+//--------------------------------------------------------------------------------------------------
+void Entity::cleanup()
+{
+    // Intentionally left blank; virtual function.
+}
+
+//--------------------------------------------------------------------------------------------------
+void Entity::cleanup_components()
+{
+    for (std::weak_ptr<Component> component : m_update_ordered_components)
+    {
+        if (auto component_ptr = component.lock())
+        {
+            component_ptr->cleanup_component();
+        }
+    }
+}
+
+//--------------------------------------------------------------------------------------------------
+void Entity::on_component_added() const
+{
+    assert(!Engine::get().is_rendering());
+    assert(!Engine::get().is_cleaning_up());
 }
 
 } // namespace Core

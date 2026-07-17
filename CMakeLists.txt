@@ -22,8 +22,12 @@ add_library(AuroraEngine
     ${PROJECT_SOURCE_DIR}/src/window.cpp
 
     # Components
+    # ${PROJECT_SOURCE_DIR}/src/components/collision_component.cpp
     ${PROJECT_SOURCE_DIR}/src/components/render_component.cpp
-    ${PROJECT_SOURCE_DIR}/src/components/rect_render_component.cpp
+    ${PROJECT_SOURCE_DIR}/src/components/render_components/rect_render_component.cpp
+
+    # Subsystems
+    # ${PROJECT_SOURCE_DIR}/src/subsystems/collision_subsystem.cpp
 )
 
 # Include directories for the engine

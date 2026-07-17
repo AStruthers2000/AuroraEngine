@@ -92,7 +92,7 @@ public:
     requires(std::is_base_of_v<Layer, TLayer>)
     void push_layer()
     {
-        m_pending_layers.push_back(std::make_unique<TLayer>(get()));
+        m_pending_layers.push_back(std::make_shared<TLayer>(get()));
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -148,8 +148,8 @@ private:
     bool m_running = false;
     std::unique_ptr<Window> m_window;
 
-    std::vector<std::unique_ptr<Layer>> m_pending_layers;
-    std::vector<std::unique_ptr<Layer>> m_layer_stack;
+    std::vector<std::shared_ptr<Layer>> m_pending_layers;
+    std::vector<std::shared_ptr<Layer>> m_layer_stack;
 };
 
 } // namespace Core

@@ -7,8 +7,8 @@ namespace Core
 {
 
 //--------------------------------------------------------------------------------------------------
-Entity::Entity(Layer& owning_world, std::uint8_t update_order)
-    : m_world(owning_world)
+Entity::Entity(Layer& owning_layer, std::uint8_t update_order)
+    : m_owning_layer(owning_layer)
 {
 }
 

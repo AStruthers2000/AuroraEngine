@@ -50,9 +50,9 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Entity constructor.
     ///
-    /// @param [in] owning_world - Entity must know what world owns it. 
+    /// @param [in] owning_layer - Entity must know what Layer owns it. 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    Entity(Layer& owning_world, std::uint8_t update_order = DEFAULT_SORTING_ORDER);
+    Entity(Layer& owning_layer, std::uint8_t update_order = DEFAULT_SORTING_ORDER);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Entity destructor.
@@ -256,6 +256,11 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////
     EState get_entity_state() const { return m_state; }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @return Gets the Layer that owns this Entity.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    Layer& get_owning_layer() const { return m_owning_layer; }
+
 private:
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Enum that allows insert_component_sorted() to gather the correct sorting order from
@@ -310,7 +315,7 @@ private:
                                  std::weak_ptr<Component> component,
                                  EComponentInsertType insert_sorter);
     
-    Layer& m_world;
+    Layer& m_owning_layer;
     std::uint8_t m_update_order;
     EState m_state{ EState::Pending };
 

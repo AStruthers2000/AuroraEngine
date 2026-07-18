@@ -60,6 +60,38 @@ public:
     virtual ~Entity() = default;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Broadcasts an event to the Event system.
+    ///
+    /// @param [in] event - Event to be broadcasted.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void broadcast_event(Event& event);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Passes Events on to Components in order before trying to handle the Event. Called by
+    ///        the owning Layer during event propagation.
+    ///
+    /// @param [in] event - Event that will be passed down to Components on this Entity.
+    //////////////////////////////////////////////////////////////////////////////////////////////// 
+    void propagate_event_down(Event& event);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Broadcasts an event within this Entity only, without propagating to the Engine root.
+    ///        Components on this Entity and this Entity's own on_event() are called; other Entities
+    ///        and Layers are unaffected.
+    ///
+    /// @param [in] event - Event to be broadcast within this Entity.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void broadcast_event_within_entity(Event& event);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Runs any Event-handling-specific code. Allows Entities to dispatch Events. Called
+    ///        from Entity::propagate_event_down(). Overridable.
+    ///
+    /// @param [in] event - Event that was broadcast to the Event system.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    virtual void on_event(Event& event);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Phase 1 of Entity initialization. Flushes all pending Components into the Component
     ///        store and calls awake(). Transitions state from Pending to Awoken. Not overridable.
     ///

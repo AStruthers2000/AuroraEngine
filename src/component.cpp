@@ -32,6 +32,24 @@ std::weak_ptr<Component> Component::get_sibling_component_impl(std::type_index t
 }
 
 //--------------------------------------------------------------------------------------------------
+void Component::broadcast_event(Event& event)
+{
+    get_owner().broadcast_event(event);
+}
+
+//--------------------------------------------------------------------------------------------------
+void Component::broadcast_event_within_entity(Event& event)
+{
+    get_owner().broadcast_event_within_entity(event);
+}
+
+//--------------------------------------------------------------------------------------------------
+void Component::on_event(Event& event)
+{
+    // Intentionally left blank; virtual function.
+}
+
+//--------------------------------------------------------------------------------------------------
 void Component::awake_component()
 {
     awake();

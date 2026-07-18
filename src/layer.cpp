@@ -23,6 +23,38 @@ Layer::Layer(Engine& owning_engine)
 Layer::~Layer() = default;
 
 //--------------------------------------------------------------------------------------------------
+void Layer::broadcast_event(Event& event)
+{
+    Engine::get().broadcast_event(event);
+}
+
+//--------------------------------------------------------------------------------------------------
+void Layer::propagate_event_down(Event& event)
+{
+    // Broadcast Event to all owned Entities
+    for (auto& entity : m_entities)
+    {
+        entity->propagate_event_down(event);
+        if (event.get_handled())
+        {
+            break;
+        }
+    }
+
+    // If the Event wasn't handled by one of the Entities, allow the Layer to handle the Event
+    if (!event.get_handled())
+    {
+        on_event(event);
+    }
+}
+
+//--------------------------------------------------------------------------------------------------
+void Layer::broadcast_event_within_layer(Event& event)
+{
+    propagate_event_down(event);
+}
+
+//--------------------------------------------------------------------------------------------------
 void Layer::on_event(Event& event)
 {
     // Intentionally left blank; virtual function.

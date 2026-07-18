@@ -43,7 +43,32 @@ public:
     virtual ~Layer();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Runs any Event-handling-specific code. Allows Layers to dispatch Events. 
+    /// @brief Broadcasts an event to the Event system.
+    ///
+    /// @param [in] event - Event to be broadcasted.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void broadcast_event(Event& event);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Passes Events on to Entities in order before trying to handle the Event. Called by
+    ///        the Engine during event broadcasting.
+    ///
+    /// @param [in] event - Event that will be passed down to Entities on this Layer.
+    //////////////////////////////////////////////////////////////////////////////////////////////// 
+    void propagate_event_down(Event& event);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Broadcasts an event within this Layer only, without propagating to the Engine root.
+    ///        Entities on this Layer and this Layer's own on_event() are called; other Layers are
+    ///        unaffected.
+    ///
+    /// @param [in] event - Event to be broadcast within this Layer.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void broadcast_event_within_layer(Event& event);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Runs any Event-handling-specific code. Allows Layers to dispatch Events. Called from
+    ///        Layer::propagate_event_down(). Overridable.
     ///
     /// @param [in] event - Event that was broadcast to the Event system.
     ////////////////////////////////////////////////////////////////////////////////////////////////

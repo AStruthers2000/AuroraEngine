@@ -59,6 +59,30 @@ public:
     virtual ~Component();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Broadcasts an event to the Event system.
+    ///
+    /// @param [in] event - Event to be broadcasted.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void broadcast_event(Event& event);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Broadcasts an event within the owning Entity only, without propagating to the Engine
+    ///        root. Equivalent to calling broadcast_event_within_entity() on the owning Entity.
+    ///        Useful for notifying sibling Components without a global round-trip.
+    ///
+    /// @param [in] event - Event to be broadcast within the owning Entity.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void broadcast_event_within_entity(Event& event);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Runs any Event-handling-specific code. Allows Components to dispatch Events. Called
+    ///        from Entity::propagate_event_down(). Overridable.
+    ///
+    /// @param [in] event - Event that was broadcast to the Event system.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    virtual void on_event(Event& event);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Phase 1 of Component initialization. Called from owning Entity after all pending
     ///        Components have been flushed to the active store. Calls awake(). Not overridable.
     ///

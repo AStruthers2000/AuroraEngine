@@ -210,11 +210,8 @@ private:
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Processes all input, draining the SDL event queue. TODO: A lot more is needed here.
-    ///
-    /// @return Returns true if the Engine should quit (i.e. SDL_EVENT_QUIT was received during this
-    ///         frame). Otherwise, false.
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    bool process_input();
+    void process_input();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Calls Layer::update() for each Layer in the Layer stack.
@@ -235,6 +232,7 @@ private:
     bool m_is_cleaning_up{ false };
     float m_fixed_step{ 1.f / 60.f };
     float m_accumulator{ 0.f };
+    std::uint32_t m_broadcast_depth{ 0 };
 
     std::unique_ptr<Window> m_window;
 

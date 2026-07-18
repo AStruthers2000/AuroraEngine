@@ -1,5 +1,7 @@
 #include "aurora_engine_public.h"
 
+#include "core/components/render_components/rect_render_component.h"
+
 #include <print>
 
 class TestComponent : public Core::Component
@@ -12,6 +14,25 @@ public:
     virtual ~TestComponent()
     {
         // std::println("Test component has been destroyed");
+    }
+
+    virtual void on_event(Core::Event& event)
+    {
+        Core::EventDispatcher dispatcher(event);
+        dispatcher.dispatch<Core::MouseMovedEvent>(
+            [this](Core::MouseMovedEvent& event)
+            {
+                // std::println("{}", event.to_string());
+                return false;
+            }
+        );
+        dispatcher.dispatch<Core::MouseButtonReleasedEvent>(
+            [this](Core::MouseButtonReleasedEvent& event)
+            {
+                std::println("{}", event.to_string());
+                return false;
+            }
+        );
     }
 
     virtual void awake() override
@@ -50,12 +71,79 @@ class TestEntity : public Core::Entity
 public:
     TestEntity(Core::Layer& owner) : Core::Entity(owner)
     {
-        add_component<TestComponent>();
+        glm::vec2 position{ 100, 100 };
+        glm::vec2 scale{ 100, 100 };
+        add_component<Core::TransformComponent>(position, scale);
+
+        Core::Component::Order order{};
+        SDL_Color color{ 100, 100, 100, 255 };
+        add_component<Core::RectRenderComponent>(order, color);
     }
 
     virtual ~TestEntity()
     {
         // std::println("Test entity has been destroyed");
+    }
+
+    virtual void on_event(Core::Event& event)
+    {
+        Core::EventDispatcher dispatcher(event);
+        dispatcher.dispatch<Core::KeyPressedEvent>(
+            [this](Core::KeyPressedEvent& event)
+            {
+                if (!event.is_repeat())
+                {   
+                    switch (event.get_scancode())
+                    {
+                        case SDL_Scancode::SDL_SCANCODE_A:
+                            move_dir.x -= 1.f;
+                            break;
+                        case SDL_Scancode::SDL_SCANCODE_D:
+                            move_dir.x += 1.f;
+                            break;
+                        case SDL_Scancode::SDL_SCANCODE_W:
+                            move_dir.y -= 1.f;
+                            break;
+                        case SDL_Scancode::SDL_SCANCODE_S:
+                            move_dir.y += 1.f;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                return false;
+            }
+        );
+        dispatcher.dispatch<Core::KeyReleasedEvent>(
+            [this](Core::KeyReleasedEvent& event)
+            {
+                switch (event.get_scancode())
+                {
+                    case SDL_Scancode::SDL_SCANCODE_A:
+                        move_dir.x += 1.f;
+                        break;
+                    case SDL_Scancode::SDL_SCANCODE_D:
+                        move_dir.x -= 1.f;
+                        break;
+                    case SDL_Scancode::SDL_SCANCODE_W:
+                        move_dir.y += 1.f;
+                        break;
+                    case SDL_Scancode::SDL_SCANCODE_S:
+                        move_dir.y -= 1.f;
+                        break;
+                    default:
+                        break;
+                }
+                return false;
+            }
+        );
+        dispatcher.dispatch<Core::MouseButtonPressedEvent>(
+            [this](Core::MouseButtonPressedEvent& event)
+            {
+                std::println("Entity handling mouse button pressed event: {}", event.to_string());
+                return true;
+            }
+        );
     }
 
     virtual void awake() override
@@ -66,11 +154,6 @@ public:
 
     virtual void update(float delta_time) override
     {
-        // static int added{ -1000 };
-        // if (added++ == 0)
-        // {
-        //     add_component<TestComponent>();
-        // }
         // std::println("Test entity updating");
     }
 
@@ -82,6 +165,24 @@ public:
     virtual void fixed_update(float fixed_dt) override
     {
         // std::println("Test entity fixed updating");
+        float length = glm::length(move_dir);
+        if (length >= 0.001)
+        {
+            static glm::vec2 last_norm{ 0.f, 0.f };
+            glm::vec2 norm = glm::normalize(move_dir);
+            if (norm != last_norm)
+            {
+                std::println("Move dir = ({}, {})", norm.x, norm.y);
+            }
+            last_norm = norm;
+
+            glm::vec2 vel = norm * 500.f * fixed_dt;
+            if (auto transform = get_component<Core::TransformComponent>().lock())
+            {
+                transform->set_velocity(vel);
+                transform->update_position(transform->get_velocity());
+            }             
+        }
     }
 
     virtual void render(SDL_Renderer* renderer) override
@@ -93,6 +194,9 @@ public:
     {
         // std::println("Test entity cleaning up");
     }
+
+private:
+    glm::vec2 move_dir{ 0.f, 0.f };
 };
 
 class TestLayer : public Core::Layer
@@ -112,82 +216,11 @@ public:
                 return false;
             }
         );
-        dispatcher.dispatch<Core::KeyPressedEvent>(
-            [this](Core::KeyPressedEvent& event)
+        dispatcher.dispatch<Core::WindowCloseEvent>(
+            [this](Core::WindowCloseEvent& event)
             {
-                if (!event.is_repeat())
-                {   
-                    switch (event.get_scancode())
-                    {
-                        case SDL_Scancode::SDL_SCANCODE_A:
-                            std::println("Moving left");
-                            move_dir.x -= 1.f;
-                            break;
-                        case SDL_Scancode::SDL_SCANCODE_D:
-                            std::println("Moving right");
-                            move_dir.x += 1.f;
-                            break;
-                        case SDL_Scancode::SDL_SCANCODE_W:
-                            std::println("Moving up");
-                            move_dir.y += 1.f;
-                            break;
-                        case SDL_Scancode::SDL_SCANCODE_S:
-                            std::println("Moving down");
-                            move_dir.y -= 1.f;
-                            break;
-                        default:
-                            break;
-                    }
-                }
-                return false;
-            }
-        );
-        dispatcher.dispatch<Core::KeyReleasedEvent>(
-            [this](Core::KeyReleasedEvent& event)
-            {
-                switch (event.get_scancode())
-                {
-                    case SDL_Scancode::SDL_SCANCODE_A:
-                        std::println("Done moving left");
-                        move_dir.x += 1.f;
-                        break;
-                    case SDL_Scancode::SDL_SCANCODE_D:
-                        std::println("Done moving right");
-                        move_dir.x -= 1.f;
-                        break;
-                    case SDL_Scancode::SDL_SCANCODE_W:
-                        std::println("Done moving up");
-                        move_dir.y -= 1.f;
-                        break;
-                    case SDL_Scancode::SDL_SCANCODE_S:
-                        std::println("Done moving down");
-                        move_dir.y += 1.f;
-                        break;
-                    default:
-                        break;
-                }
-                return false;
-            }
-        );
-        dispatcher.dispatch<Core::MouseMovedEvent>(
-            [this](Core::MouseMovedEvent& event)
-            {
-                std::println("{}", event.to_string());
-                return false;
-            }
-        );
-        dispatcher.dispatch<Core::MouseButtonPressedEvent>(
-            [this](Core::MouseButtonPressedEvent& event)
-            {
-                std::println("{}", event.to_string());
-                return false;
-            }
-        );
-        dispatcher.dispatch<Core::MouseButtonReleasedEvent>(
-            [this](Core::MouseButtonReleasedEvent& event)
-            {
-                std::println("{}", event.to_string());
-                return false;
+                Core::Engine::get().stop();
+                return true;
             }
         );
     }
@@ -201,17 +234,6 @@ public:
     virtual void update(float delta_time) override
     {
         // std::println("Test layer updating");
-        float length = glm::length(move_dir);
-        if (length >= 0.001)
-        {
-            static glm::vec2 last_norm{ 0.f, 0.f };
-            glm::vec2 norm = glm::normalize(move_dir);
-            if (norm != last_norm)
-            {
-                std::println("Move dir = ({}, {})", norm.x, norm.y);
-            }
-            last_norm = norm;
-        }
     }
 
     virtual void late_update(float delta_time) override
@@ -233,9 +255,6 @@ public:
     {
         // std::println("Test layer cleaning up");
     }
-
-private:
-    glm::vec2 move_dir{ 0.f, 0.f };
 };
 
 int main()
@@ -246,6 +265,7 @@ int main()
     };
 
     Core::Engine engine(spec);
+    engine.set_fixed_timestep(1.f/144.f);
     engine.push_layer<TestLayer>();
     engine.run();
 

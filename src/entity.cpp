@@ -2,7 +2,11 @@
 /// Copyright (C) 2026 AStruthers2000 - All Rights Reserved
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 #include "core/entity.h"
+
 #include "core/engine.h"
+#include "core/events/event.h"
+
+#include <ranges>
 
 namespace Core
 {
@@ -12,6 +16,48 @@ Entity::Entity(Layer& owning_layer, std::uint8_t update_order)
     : m_owning_layer(owning_layer)
     , m_update_order(update_order)
 {
+}
+
+//--------------------------------------------------------------------------------------------------
+void Entity::broadcast_event(Event& event)
+{
+    get_owning_layer().broadcast_event(event);
+}
+
+//--------------------------------------------------------------------------------------------------
+void Entity::propagate_event_down(Event& event)
+{
+    // Broadcast Event to all owned Components
+    for (auto& component : m_update_ordered_components)
+    {
+        if (auto component_ptr = component.lock())
+        {
+            component_ptr->on_event(event);
+        }
+
+        if (event.get_handled())
+        {
+            break;
+        }
+    }
+
+    // If the Event wasn't handled by one of the Components, allow the Entity to handle the Event
+    if (!event.get_handled())
+    {
+        on_event(event);
+    }
+}
+
+//--------------------------------------------------------------------------------------------------
+void Entity::broadcast_event_within_entity(Event& event)
+{
+    propagate_event_down(event);
+}
+
+//--------------------------------------------------------------------------------------------------
+void Entity::on_event(Event& event)
+{
+    // Intentionally left blank; virtual function.
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -33,7 +79,7 @@ void Entity::awake_entity()
     }
     else
     {
-        std::println("[Entity::awake_entity] awake_entity() called in unexpected state: %d",
+        std::println("[Entity::awake_entity] awake_entity() called in unexpected state: {}",
                      static_cast<int>(m_state));
     }
 }
@@ -89,7 +135,7 @@ void Entity::start_entity()
     }
     else
     {
-        std::println("[Entity::start_entity] start_entity() called in unexpected state: %d",
+        std::println("[Entity::start_entity] start_entity() called in unexpected state: {}",
                      static_cast<int>(m_state));
     }
 }

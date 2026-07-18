@@ -89,17 +89,12 @@ void Engine::run()
     {
         std::uint64_t frame_start_time = SDL_GetTicksNS();
         float delta_time = static_cast<float>(frame_start_time - previous_frame_time) / 1E+09;
-        delta_time = glm::clamp(delta_time, 0.001f, 0.1f);
+        delta_time = glm::min(delta_time, 0.1f);
 
         apply_pending_transitions();
         initialize_pending_layers();
 
-        bool exit_indicator = process_input();
-        if (exit_indicator)
-        {
-            stop();
-            break;
-        }
+        process_input();
 
         m_accumulator += delta_time;
         m_is_updating = true;
@@ -135,14 +130,18 @@ Engine& Engine::get()
 //--------------------------------------------------------------------------------------------------
 void Engine::broadcast_event(Event& event)
 {
+    constexpr std::uint32_t k_max_broadcast_depth = 16;
+    assert(m_broadcast_depth < k_max_broadcast_depth);
+    ++m_broadcast_depth;
     for (auto& layer : std::views::reverse(m_layer_stack))
     {
-        layer->on_event(event);
+        layer->propagate_event_down(event);
         if (event.get_handled())
         {
             break;
         }
     }
+    --m_broadcast_depth;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -158,12 +157,8 @@ void Engine::initialize_pending_layers()
 }
 
 //--------------------------------------------------------------------------------------------------
-bool Engine::process_input()
+void Engine::process_input()
 {
-    // return m_input_subsystem.test();
-
-    bool quit_requested{ false };
-
     SDL_Event sdl_event{ 0 };
     while (SDL_PollEvent(&sdl_event))
     {
@@ -171,8 +166,6 @@ bool Engine::process_input()
         {
             case SDL_EventType::SDL_EVENT_QUIT:
             {
-                quit_requested = true;
-
                 WindowCloseEvent event;
                 broadcast_event(event);
                 break;
@@ -221,8 +214,6 @@ bool Engine::process_input()
             }
         }
     }
-
-    return quit_requested;
 }
 
 //--------------------------------------------------------------------------------------------------

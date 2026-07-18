@@ -5,6 +5,7 @@
 
 #include "core/engine.h"
 #include "core/entity.h"
+#include "core/events/event.h"
 
 #include <algorithm>
 #include <print>
@@ -20,6 +21,12 @@ Layer::Layer(Engine& owning_engine)
 
 //--------------------------------------------------------------------------------------------------
 Layer::~Layer() = default;
+
+//--------------------------------------------------------------------------------------------------
+void Layer::on_event(Event& event)
+{
+    // Intentionally left blank; virtual function.
+}
 
 //--------------------------------------------------------------------------------------------------
 void Layer::initialize_layer()

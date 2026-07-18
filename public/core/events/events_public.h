@@ -1,19 +1,15 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Copyright (C) 2026 AStruthers2000 - All Rights Reserved
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// @brief Public header including all core headers.
+/// @brief Public header including all core event headers.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-#ifndef AURORA_ENGINE_PUBLIC_H
-#define AURORA_ENGINE_PUBLIC_H
+#ifndef CORE_EVENTS_PUBLIC_H
+#define CORE_EVENTS_PUBLIC_H
 
-#include "core/component.h"
-#include "core/engine.h"
-#include "core/entity.h"
-#include "core/layer.h"
+#include "event.h"
+#include "event_dispatcher.h"
+#include "key_input_events.h"
+#include "mouse_input_events.h"
+#include "window_events.h"
 
-#include "core/events/events_public.h"
-
-#include <SDL3/SDL.h>
-#include <SDL3_image/SDL_image.h>
-
-#endif // AURORA_ENGINE_PUBLIC_H
+#endif // CORE_EVENTS_PUBLIC_H

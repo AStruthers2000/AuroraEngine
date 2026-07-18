@@ -5,8 +5,11 @@
 
 #include "window.h"
 #include "core/layer.h"
+#include "core/events/events_public.h"
 
 #include <glm/glm.hpp>
+
+#include <ranges>
 
 namespace Core
 {
@@ -130,6 +133,19 @@ Engine& Engine::get()
 }
 
 //--------------------------------------------------------------------------------------------------
+void Engine::broadcast_event(Event& event)
+{
+    for (auto& layer : std::views::reverse(m_layer_stack))
+    {
+        layer->on_event(event);
+        if (event.get_handled())
+        {
+            break;
+        }
+    }
+}
+
+//--------------------------------------------------------------------------------------------------
 void Engine::initialize_pending_layers()
 {
     // Initialize and move all pending worlds
@@ -148,17 +164,61 @@ bool Engine::process_input()
 
     bool quit_requested{ false };
 
-    SDL_Event event{ 0 };
-    while (SDL_PollEvent(&event))
+    SDL_Event sdl_event{ 0 };
+    while (SDL_PollEvent(&sdl_event))
     {
-        switch (event.type)
+        switch (sdl_event.type)
         {
             case SDL_EventType::SDL_EVENT_QUIT:
+            {
                 quit_requested = true;
+
+                WindowCloseEvent event;
+                broadcast_event(event);
                 break;
-            // case SDL_EventType::SDL_EVENT_WINDOW_RESIZED:
-            //     Engine::get().get_window().set_size({event.window.data1, event.window.data2});
-            //     break;
+            }
+            case SDL_EventType::SDL_EVENT_WINDOW_RESIZED:
+            {
+                WindowResizeEvent event(sdl_event.window.data1, sdl_event.window.data2);
+                broadcast_event(event);
+                break;
+            }
+            case SDL_EventType::SDL_EVENT_KEY_DOWN:
+            {
+                KeyPressedEvent event(sdl_event.key.scancode, sdl_event.key.repeat);
+                broadcast_event(event);
+                break;
+            }
+            case SDL_EventType::SDL_EVENT_KEY_UP:
+            {
+                KeyReleasedEvent event(sdl_event.key.scancode);
+                broadcast_event(event);
+                break;
+            }
+            case SDL_EventType::SDL_EVENT_MOUSE_BUTTON_DOWN:
+            {
+                MouseButtonPressedEvent event(sdl_event.button.button, sdl_event.button.x, sdl_event.button.y);
+                broadcast_event(event);
+                break;
+            }
+            case SDL_EventType::SDL_EVENT_MOUSE_BUTTON_UP:
+            {
+                MouseButtonReleasedEvent event(sdl_event.button.button);
+                broadcast_event(event);
+                break;
+            }
+            case SDL_EventType::SDL_EVENT_MOUSE_MOTION:
+            {
+                MouseMovedEvent event(sdl_event.motion.x, sdl_event.motion.y);
+                broadcast_event(event);
+                break;
+            }
+            case SDL_EventType::SDL_EVENT_MOUSE_WHEEL:
+            {
+                MouseScrolledEvent event(sdl_event.wheel.x, sdl_event.wheel.y);
+                broadcast_event(event);
+                break;
+            }
         }
     }
 

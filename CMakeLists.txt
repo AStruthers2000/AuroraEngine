@@ -26,6 +26,11 @@ add_library(AuroraEngine
     ${PROJECT_SOURCE_DIR}/src/components/render_component.cpp
     ${PROJECT_SOURCE_DIR}/src/components/render_components/rect_render_component.cpp
 
+    # Events
+    ${PROJECT_SOURCE_DIR}/public/core/events/event.h
+    ${PROJECT_SOURCE_DIR}/public/core/events/event_dispatcher.h
+    ${PROJECT_SOURCE_DIR}/public/core/events/key_input_events.h
+
     # Subsystems
     # ${PROJECT_SOURCE_DIR}/src/subsystems/collision_subsystem.cpp
 )

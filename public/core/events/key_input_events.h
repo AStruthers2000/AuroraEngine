@@ -61,7 +61,7 @@ public:
         return std::format("KeyPressedEvent: {} (repeat={})", m_scancode, m_is_repeat);
     }
 
-    EVENT_CLASS_TYPE(KeyPressed)
+    EVENT_CLASS_TYPE(KeyPressedEvent)
 
 private:
     bool m_is_repeat{ false };
@@ -81,7 +81,7 @@ public:
         return std::format("KeyReleasedEvent: {}", m_scancode);
     }
 
-    EVENT_CLASS_TYPE(KeyReleased)
+    EVENT_CLASS_TYPE(KeyReleasedEvent)
 };
 
 } // namespace Core

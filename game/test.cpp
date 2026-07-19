@@ -4,6 +4,22 @@
 
 #include <print>
 
+class PlayerTookDamageEvent : public Core::Event
+{
+public:
+    PlayerTookDamageEvent(int damage) : m_damage(damage) {}
+
+    std::string to_string() const override
+    {
+        return std::format("Player took {} damage", m_damage);
+    }
+
+    EVENT_CLASS_TYPE(PlayerTookDamageEvent)
+
+private:
+    int m_damage{ 0 };
+};
+
 class TestComponent : public Core::Component
 {
 public:
@@ -23,6 +39,18 @@ public:
             [this](Core::MouseMovedEvent& event)
             {
                 // std::println("{}", event.to_string());
+                return false;
+            }
+        );
+        dispatcher.dispatch<Core::MouseButtonPressedEvent>(
+            [this](Core::MouseButtonPressedEvent& event)
+            {
+                if (event.get_mouse_button() == 1)
+                {
+                    PlayerTookDamageEvent e(event.get_click_y());
+                    broadcast_event(e);
+                    return true;
+                }
                 return false;
             }
         );
@@ -141,6 +169,13 @@ public:
             [this](Core::MouseButtonPressedEvent& event)
             {
                 std::println("Entity handling mouse button pressed event: {}", event.to_string());
+                return true;
+            }
+        );
+        dispatcher.dispatch<PlayerTookDamageEvent>(
+            [this](PlayerTookDamageEvent& event)
+            {
+                std::println("{}", event.to_string());
                 return true;
             }
         );

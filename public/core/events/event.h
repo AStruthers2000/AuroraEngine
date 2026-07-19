@@ -7,21 +7,14 @@
 #define CORE_EVENTS_EVENT_H
 
 #include <string>
+#include <typeindex>
 
 namespace Core
 {
 
-enum class EventType
-{
-    None = 0,
-    WindowClose, WindowResize,
-    KeyPressed, KeyReleased,
-    MouseButtonPressed, MouseButtonReleased, MouseMoved, MouseScrolled
-};
-
-#define EVENT_CLASS_TYPE(type) static EventType get_static_type() { return EventType::type; }\
-                               virtual EventType get_event_type() const override { return get_static_type(); }\
-                               virtual char const* get_name() const override { return #type; }
+#define EVENT_CLASS_TYPE(TypeName) static std::type_index get_static_type() { return std::type_index(typeid(TypeName)); }\
+                                   virtual std::type_index get_event_type() const override { return get_static_type(); }\
+                                   virtual char const* get_name() const override { return #TypeName; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief 
@@ -30,7 +23,7 @@ class Event
 {
 public:
     virtual ~Event() {}
-    virtual EventType get_event_type() const = 0;
+    virtual std::type_index get_event_type() const = 0;
     virtual char const* get_name() const = 0;
     virtual std::string to_string() const { return get_name(); }
     bool get_handled() const { return m_handled; }

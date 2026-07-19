@@ -33,7 +33,7 @@ public:
         return std::format("MouseMovedEvent: ({}, {})", get_mouse_x(), get_mouse_y());
     }
 
-    EVENT_CLASS_TYPE(MouseMoved)
+    EVENT_CLASS_TYPE(MouseMovedEvent)
         
 private:
     glm::vec2 m_mouse_position{ 0.0, 0.0 };
@@ -57,7 +57,7 @@ public:
         return std::format("MouseScrolledEvent: ({}, {})", get_mouse_offset_x(), get_mouse_offset_y());
     }
 
-    EVENT_CLASS_TYPE(MouseScrolled)
+    EVENT_CLASS_TYPE(MouseScrolledEvent)
         
 private:
     glm::vec2 m_mouse_offset{ 0.0, 0.0 };
@@ -96,7 +96,7 @@ public:
         return std::format("MouseButtonPressedEvent: {} (location=({}, {}))", m_button, m_click_location.x, m_click_location.y);
     }
 
-    EVENT_CLASS_TYPE(MouseButtonPressed)
+    EVENT_CLASS_TYPE(MouseButtonPressedEvent)
 
 private:
     glm::vec2 m_click_location{ 0.0, 0.0 };
@@ -116,7 +116,7 @@ public:
         return std::format("MouseButtonReleasedEvent: {}", m_button);
     }
 
-    EVENT_CLASS_TYPE(MouseButtonReleased)
+    EVENT_CLASS_TYPE(MouseButtonReleasedEvent)
 };
 
 } // namespace Core

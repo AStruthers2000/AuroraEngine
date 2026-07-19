@@ -28,7 +28,7 @@ public:
         return std::format("WindowCloseEvent");
     }
 
-    EVENT_CLASS_TYPE(WindowClose)
+    EVENT_CLASS_TYPE(WindowCloseEvent)
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -49,7 +49,7 @@ public:
         return std::format("WindowResizeEvent: ({}, {})", get_width(), get_height());
     }
 
-    EVENT_CLASS_TYPE(WindowResize)
+    EVENT_CLASS_TYPE(WindowResizeEvent)
 
 private:
     glm::vec2 m_window_size{ 0.0f, 0.0f };

@@ -6,10 +6,12 @@
 #ifndef AURORA_ENGINE_PUBLIC_H
 #define AURORA_ENGINE_PUBLIC_H
 
+#include "core/asset_manager.h"
 #include "core/component.h"
 #include "core/engine.h"
 #include "core/entity.h"
 #include "core/layer.h"
+#include "core/sdl_color_ops.h"
 
 #include "core/events/events_public.h"
 

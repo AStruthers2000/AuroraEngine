@@ -1,6 +1,7 @@
 #include "aurora_engine_public.h"
 
 #include "core/components/render_components/rect_render_component.h"
+#include "core/components/render_components/text_render_component.h"
 
 #include <print>
 
@@ -106,6 +107,10 @@ public:
         Core::Component::Order order{};
         SDL_Color color{ 100, 100, 100, 255 };
         add_component<Core::RectRenderComponent>(order, color);
+
+        SDL_Color text_color{ 255, 0, 0, 255 };
+        std::string text = "Hello world, this is some text :)";
+        add_component<Core::TextRenderComponent>(order, Core::Font::TINY_REGULAR, 25, text, text_color);
     }
 
     virtual ~TestEntity()
@@ -175,7 +180,17 @@ public:
         dispatcher.dispatch<PlayerTookDamageEvent>(
             [this](PlayerTookDamageEvent& event)
             {
-                std::println("{}", event.to_string());
+                if (auto text_ptr = get_component<Core::TextRenderComponent>().lock())
+                {
+                    text_ptr->set_text(event.to_string());
+
+                    auto rand_color = []()
+                    {
+                        return static_cast<std::uint8_t>(rand() * 255.f);
+                    };
+                    SDL_Color new_color(rand_color(), rand_color(), rand_color(), 255);
+                    text_ptr->set_color(new_color);
+                }
                 return true;
             }
         );

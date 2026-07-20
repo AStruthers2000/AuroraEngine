@@ -14,9 +14,10 @@ target_link_libraries(AuroraEngineTest
         AuroraEngine
 )
 
-# add_custom_command(TARGET AuroraEngineTest POST_BUILD
-#     COMMAND ${CMAKE_COMMAND} -E copy_directory
-#         "${CMAKE_CURRENT_SOURCE_DIR}/data"
-#         "$<TARGET_FILE_DIR:AuroraEngineTest>/data"
-#     COMMENT "Copying game assets to output directory"
-# )
+# Copy engine assets next to the test executable for local development
+add_custom_command(TARGET AuroraEngineTest POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${PROJECT_SOURCE_DIR}/data"
+        "$<TARGET_FILE_DIR:AuroraEngineTest>/aurora-engine"
+    COMMENT "Copying AuroraEngine assets to output directory"
+)

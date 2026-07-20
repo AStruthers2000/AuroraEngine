@@ -11,10 +11,12 @@ option(BUILD_TESTING "Build test game executable" ON)
 find_package(glm CONFIG REQUIRED)
 find_package(SDL3 CONFIG REQUIRED)
 find_package(SDL3_image CONFIG REQUIRED)
+find_package(SDL3_ttf CONFIG REQUIRED)
 
 # Engine library
 add_library(AuroraEngine
     # Core
+    ${PROJECT_SOURCE_DIR}/src/asset_manager.cpp
     ${PROJECT_SOURCE_DIR}/src/component.cpp
     ${PROJECT_SOURCE_DIR}/src/engine.cpp
     ${PROJECT_SOURCE_DIR}/src/entity.cpp
@@ -25,6 +27,7 @@ add_library(AuroraEngine
     # ${PROJECT_SOURCE_DIR}/src/components/collision_component.cpp
     ${PROJECT_SOURCE_DIR}/src/components/render_component.cpp
     ${PROJECT_SOURCE_DIR}/src/components/render_components/rect_render_component.cpp
+    ${PROJECT_SOURCE_DIR}/src/components/render_components/text_render_component.cpp
 
     # Events
     ${PROJECT_SOURCE_DIR}/public/core/events/event.h
@@ -49,9 +52,13 @@ target_link_libraries(AuroraEngine
         glm::glm
         SDL3::SDL3
         SDL3_image::SDL3_image
+        SDL3_ttf::SDL3_ttf-static
 )
 
 # Test game executable (only built during local development)
 if(BUILD_TESTING)
     add_subdirectory(game)
 endif()
+
+# Install engine assets so cmake --install and Conan packaging both work
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/ DESTINATION res)

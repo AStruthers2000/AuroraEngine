@@ -4,6 +4,7 @@
 #include "core/engine.h"
 
 #include "window.h"
+#include "core/asset_manager.h"
 #include "core/layer.h"
 #include "core/events/events_public.h"
 
@@ -44,6 +45,9 @@ Engine::Engine(WindowSpecification const& window_spec)
     m_window = std::make_unique<Window>(window_spec);
     m_window->create();
 
+    // Set up data root
+    Core::AssetManager::set_data_root(SDL_GetBasePath() + std::string("aurora-engine/"));
+
     // Set static ptr to this engine
     s_engine = this;
 }
@@ -70,6 +74,12 @@ Engine::~Engine()
     // Cleanup window
     m_window->destroy();
     m_window.reset();
+
+    // Free all assets before shutting down TTF/SDL
+    AssetManager::instance().free_all_resources();
+
+    // Cleanup TTF
+    TTF_Quit();
 
     // Quit SDL
     SDL_Quit();

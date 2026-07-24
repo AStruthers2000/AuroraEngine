@@ -54,8 +54,8 @@ void TextRenderComponent::render(SDL_Renderer* renderer)
     
     SDL_FRect dst
     {
-        .x = transform->get_position().x,
-        .y = transform->get_position().y,
+        .x = transform->get_world_position().x,
+        .y = transform->get_world_position().y,
         .w = m_cached_texture_width,
         .h = m_cached_texture_height,
     };

@@ -10,6 +10,7 @@
 #include "core/layer.h"
 
 #include <memory>
+#include <string_view>
 #include <typeindex>
 
 namespace Core
@@ -37,6 +38,12 @@ public:
         ///        Components owned by the parent Entity./
         std::uint8_t render_order = DEFAULT_SORTING_ORDER;
     };
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief When true, the owning Entity enforces at most one Component of this derived type,
+    ///        regardless of tag. Set to true in a derived Component class to prevent duplicates.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    static constexpr bool unique_per_entity = false;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Component constructor. Default sorting order.
@@ -228,14 +235,14 @@ protected:
     ////////////////////////////////////////////////////////////////////////////////////////////////
     template <typename TComponent>
     requires(std::derived_from<TComponent, Component>)
-    std::weak_ptr<TComponent> get_sibling_component() const
+    std::weak_ptr<TComponent> get_sibling_component(std::string_view tag = "") const
     {
         return std::static_pointer_cast<TComponent>(
-            get_sibling_component_impl(std::type_index(typeid(TComponent))).lock());
+            get_sibling_component_impl(std::type_index(typeid(TComponent)), tag).lock());
     }
 
 private:
-    std::weak_ptr<Component> get_sibling_component_impl(std::type_index type) const;
+    std::weak_ptr<Component> get_sibling_component_impl(std::type_index type, std::string_view tag) const;
 
     Entity& m_owner;
     Order m_order;

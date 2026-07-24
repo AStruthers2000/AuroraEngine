@@ -26,9 +26,9 @@ Component::Component(Entity& owning_entity, Order const& component_order)
 Component::~Component() = default;
 
 //--------------------------------------------------------------------------------------------------
-std::weak_ptr<Component> Component::get_sibling_component_impl(std::type_index type) const
+std::weak_ptr<Component> Component::get_sibling_component_impl(std::type_index type, std::string_view tag) const
 {
-    return m_owner.get_component_by_type(type);
+    return m_owner.get_component_by_type(type, tag);
 }
 
 //--------------------------------------------------------------------------------------------------

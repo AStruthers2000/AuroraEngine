@@ -26,8 +26,12 @@ add_library(AuroraEngine
     # Components
     # ${PROJECT_SOURCE_DIR}/src/components/collision_component.cpp
     ${PROJECT_SOURCE_DIR}/src/components/render_component.cpp
+    ${PROJECT_SOURCE_DIR}/src/components/transform_component.cpp
     ${PROJECT_SOURCE_DIR}/src/components/render_components/rect_render_component.cpp
     ${PROJECT_SOURCE_DIR}/src/components/render_components/text_render_component.cpp
+
+    # Entities
+    ${PROJECT_SOURCE_DIR}/src/entities/label_entity.cpp
 
     # Events
     ${PROJECT_SOURCE_DIR}/public/core/events/event.h

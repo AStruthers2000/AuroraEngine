@@ -14,10 +14,14 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <functional>
 #include <print>
 #include <ranges>
+#include <string>
+#include <string_view>
 #include <typeindex>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace Core
@@ -53,6 +57,14 @@ public:
     /// @param [in] owning_layer - Entity must know what Layer owns it. 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     Entity(Layer& owning_layer, std::uint8_t update_order = DEFAULT_SORTING_ORDER);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Child entity constructor. Used when this entity is owned by another Entity rather
+    ///        than a Layer. The owning Layer reference is obtained from the parent entity.
+    ///
+    /// @param [in] owning_parent - The parent Entity that owns this child.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    Entity(Entity& owning_parent, std::uint8_t update_order = DEFAULT_SORTING_ORDER);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Entity destructor.
@@ -253,19 +265,26 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////
     template <typename TComponent, typename... Args>
     requires(std::derived_from<TComponent, Component>)
-    std::weak_ptr<TComponent> add_component(Args&&... args)
+    std::weak_ptr<TComponent> add_component(std::string_view tag, Args&&... args)
     {
         std::weak_ptr<TComponent> rtn{};
-        if (has_component<TComponent>())
+        bool const already_exists = [&]() -> bool
+        {
+            if constexpr (TComponent::unique_per_entity)
+                return has_component_of_any_tag<TComponent>();
+            else
+                return has_component<TComponent>(tag);
+        }();
+        if (already_exists)
         {
             std::type_index const type{ typeid(TComponent) };
-            std::println("[Entity::add_component] Component '{}' already exists.", type.name());
+            std::println("[Entity::add_component] Component '{}' with tag '{}' already exists.", type.name(), tag);
         }
         else
         {
             on_component_added();
             auto component_ptr = std::make_shared<TComponent>(*this, std::forward<Args>(args)...);
-            m_pending_components.push_back(component_ptr);
+            m_pending_components.push_back(PendingComponent{ component_ptr, std::string(tag) });
             rtn = component_ptr;
         }
         return rtn;
@@ -289,9 +308,9 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////
     template <typename TComponent>
     requires(std::derived_from<TComponent, Component>)
-    std::weak_ptr<TComponent> get_component() const
+    std::weak_ptr<TComponent> get_component(std::string_view tag = "") const
     {
-        auto it = m_component_store.find(std::type_index(typeid(TComponent)));
+        auto it = m_component_store.find(ComponentKey{ std::type_index(typeid(TComponent)), std::string(tag) });
         if (it != m_component_store.end())
         {
             return std::static_pointer_cast<TComponent>(it->second);
@@ -309,6 +328,7 @@ public:
     ///         if not found.
     ////////////////////////////////////////////////////////////////////////////////////////////////
     std::weak_ptr<Component> get_component_by_type(std::type_index type) const;
+    std::weak_ptr<Component> get_component_by_type(std::type_index type, std::string_view tag) const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Searches for a component of the given TComponent type. Optionally searches through
@@ -327,20 +347,21 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////
     template <typename TComponent>
     requires(std::derived_from<TComponent, Component>)
-    bool has_component(bool search_pending = true) const
+    bool has_component(std::string_view tag = "", bool search_pending = true) const
     {
         std::type_index const type{ typeid(TComponent) };
 
         // Check pending components. O(n), but this list is typically tiny
         bool const is_pending = std::ranges::any_of(
             m_pending_components,
-            [&type](std::shared_ptr<Component> const& pending)
+            [&type, &tag](PendingComponent const& pending)
             {
-                return std::type_index{ typeid(*pending) } == type;
+                return std::type_index{ typeid(*pending.component.get()) } == type
+                    && pending.tag == tag;
             });
 
         // Check already-initialized components. O(1)
-        bool const active = m_component_store.contains(type);
+        bool const active = m_component_store.contains(ComponentKey{ type, std::string(tag) });
 
         // (is_pending or active) if search_pending, else (active) 
         return search_pending ? (is_pending || active) : active;
@@ -361,6 +382,36 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////
     Layer& get_owning_layer() const { return m_owning_layer; }
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @return Gets the parent Entity, or nullptr if this is a root entity.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    Entity* get_parent() const { return m_parent; }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @return Returns true if this Entity has a parent (i.e. is a child entity).
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    bool has_parent() const { return m_parent != nullptr; }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Adds a child Entity to this Entity. Constructs a TEntity, passing *this as the
+    ///        first constructor argument, followed by any additional args.
+    ///
+    /// @tparam TEntity Templated Entity type to construct. Requires it is derived from Entity.
+    /// @tparam ...Args Types of additional arguments forwarded to the TEntity constructor.
+    ///
+    /// @return A std::weak_ptr<TEntity> to the newly created child Entity.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    template <typename TEntity, typename... Args>
+    requires(std::derived_from<TEntity, Entity>)
+    std::weak_ptr<TEntity> add_child_entity(Args&&... args)
+    {
+        on_component_added();
+        auto child = std::make_shared<TEntity>(*this, std::forward<Args>(args)...);
+        child->m_parent = this;
+        m_pending_children.push_back(child);
+        return child;
+    }
+
 private:
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Enum that allows insert_component_sorted() to gather the correct sorting order from
@@ -370,6 +421,22 @@ private:
     {
         Update,
         Render,
+    };
+
+    using ComponentKey = std::pair<std::type_index, std::string>;
+    struct ComponentKeyHash
+    {
+        std::size_t operator()(ComponentKey const& k) const noexcept
+        {
+            std::size_t h1 = std::hash<std::type_index>{}(k.first);
+            std::size_t h2 = std::hash<std::string>{}(k.second);
+            return h1 ^ (h2 << 1);
+        }
+    };
+    struct PendingComponent
+    {
+        std::shared_ptr<Component> component;
+        std::string tag;
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -399,6 +466,35 @@ private:
     void cleanup_components();
     void on_component_added() const;
 
+    template <typename TComponent>
+    requires(std::derived_from<TComponent, Component>)
+    bool has_component_of_any_tag(bool search_pending = true) const
+    {
+        std::type_index const type{ typeid(TComponent) };
+
+        if (search_pending)
+        {
+            bool const is_pending = std::ranges::any_of(
+                m_pending_components,
+                [&type](PendingComponent const& pending)
+                {
+                    return std::type_index{ typeid(*pending.component.get()) } == type;
+                });
+            if (is_pending) return true;
+        }
+
+        return std::ranges::any_of(
+            m_component_store,
+            [&type](auto const& kv) { return kv.first.first == type; });
+    }
+
+    void flush_pending_children();
+    void update_children(float delta_time);
+    void render_children(SDL_Renderer* renderer);
+    void fixed_update_children(float fixed_dt);
+    void cleanup_children();
+    void propagate_event_to_children(Event& event);
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Inserts a Component into one of the Component collections based on a given sorting
     ///        order.
@@ -413,11 +509,15 @@ private:
                                  EComponentInsertType insert_sorter);
     
     Layer& m_owning_layer;
+    Entity* m_parent{ nullptr };
     std::uint8_t m_update_order;
     EState m_state{ EState::Pending };
 
-    std::vector<std::shared_ptr<Component>> m_pending_components{};
-    std::unordered_map<std::type_index, std::shared_ptr<Component>> m_component_store{};
+    std::vector<std::shared_ptr<Entity>> m_pending_children{};
+    std::vector<std::shared_ptr<Entity>> m_children{};
+
+    std::vector<PendingComponent> m_pending_components{};
+    std::unordered_map<ComponentKey, std::shared_ptr<Component>, ComponentKeyHash> m_component_store{};
     std::vector<std::weak_ptr<Component>> m_update_ordered_components{};
     std::vector<std::weak_ptr<Component>> m_render_ordered_components{};
 };

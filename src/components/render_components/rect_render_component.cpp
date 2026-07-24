@@ -27,10 +27,10 @@ void RectRenderComponent::render(SDL_Renderer* renderer)
     if (auto transform = m_owning_transform.lock())
     {
         SDL_FRect dst{
-            .x = transform->get_position().x,
-            .y = transform->get_position().y,
-            .w = transform->get_scale().x,
-            .h = transform->get_scale().y,
+            .x = transform->get_world_position().x,
+            .y = transform->get_world_position().y,
+            .w = transform->get_world_scale().x,
+            .h = transform->get_world_scale().y,
         };
 
         SDL_SetRenderDrawColor(renderer, m_color.r, m_color.g, m_color.b, m_color.a);

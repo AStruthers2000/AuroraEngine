@@ -19,6 +19,14 @@ Entity::Entity(Layer& owning_layer, std::uint8_t update_order)
 }
 
 //--------------------------------------------------------------------------------------------------
+Entity::Entity(Entity& owning_parent, std::uint8_t update_order)
+    : m_owning_layer(owning_parent.get_owning_layer())
+    , m_parent(&owning_parent)
+    , m_update_order(update_order)
+{
+}
+
+//--------------------------------------------------------------------------------------------------
 void Entity::broadcast_event(Event& event)
 {
     get_owning_layer().broadcast_event(event);
@@ -46,6 +54,12 @@ void Entity::propagate_event_down(Event& event)
     {
         on_event(event);
     }
+
+    // Then fan out to children
+    if (!event.get_handled())
+    {
+        propagate_event_to_children(event);
+    }
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -70,12 +84,19 @@ void Entity::awake_entity()
         // guarantees that the Entity will have a transform component before awake().
         if (!has_component<TransformComponent>())
         {
-            add_component<TransformComponent>();
+            add_component<TransformComponent>("");
         }
 
         awake_components();
         awake();
         m_state = EState::Awoken;
+
+        // Awake any children added during construction or awake()
+        for (auto const& child : m_pending_children)
+        {
+            if (child->get_entity_state() == EState::Pending)
+                child->awake_entity();
+        }
     }
     else
     {
@@ -96,30 +117,33 @@ void Entity::awake_components()
     if (m_pending_components.empty()) return;
 
     // Snapshot the pending list so we can track which components are newly added
-    std::vector<std::shared_ptr<Component>> newly_added{};
+    std::vector<PendingComponent> newly_added{};
     newly_added.swap(m_pending_components);
 
     // Pass 1: flush ALL pending components into the active store before calling any virtual code.
     // This guarantees every sibling is reachable via get_component<T>() during awake_component().
-    for (std::shared_ptr<Component> const& component : newly_added)
+    for (PendingComponent const& entry : newly_added)
     {
-        insert_component_sorted(m_update_ordered_components, component, EComponentInsertType::Update);
-        insert_component_sorted(m_render_ordered_components, component, EComponentInsertType::Render);
-        m_component_store.try_emplace(std::type_index(typeid(*component.get())), component);
+        insert_component_sorted(m_update_ordered_components, entry.component, EComponentInsertType::Update);
+        insert_component_sorted(m_render_ordered_components, entry.component, EComponentInsertType::Render);
+        m_component_store.try_emplace(
+            ComponentKey{ std::type_index(typeid(*entry.component.get())), entry.tag },
+            entry.component
+        );
     }
 
     // Pass 2: awake each newly-added component now that all siblings are in the active store.
-    for (std::shared_ptr<Component> const& component : newly_added)
+    for (PendingComponent const& entry : newly_added)
     {
-        component->awake_component();
+        entry.component->awake_component();
     }
 
     // If this entity is already active (runtime component addition), immediately start them too.
     if (m_state == EState::Active)
     {
-        for (std::shared_ptr<Component> const& component : newly_added)
+        for (PendingComponent const& entry : newly_added)
         {
-            component->start_component();
+            entry.component->start_component();
         }
     }
 }
@@ -132,6 +156,20 @@ void Entity::start_entity()
         start_components();
         start();
         m_state = EState::Active;
+
+        // Start and move to active any children that were awoken above
+        for (auto const& child : m_pending_children)
+        {
+            if (child->get_entity_state() == EState::Awoken)
+            {
+                child->start_entity();
+                std::uint8_t priority = child->get_update_order();
+                auto it = std::find_if(m_children.begin(), m_children.end(),
+                    [priority](auto const& c){ return c->get_update_order() > priority; });
+                m_children.insert(it, child);
+            }
+        }
+        m_pending_children.clear();
     }
     else
     {
@@ -168,6 +206,10 @@ void Entity::update_entity(float delta_time)
     update(delta_time);
     late_update_components(delta_time);
     late_update(delta_time);
+
+    // Flush and update children after the parent's full update pass
+    flush_pending_children();
+    update_children(delta_time);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -195,6 +237,7 @@ void Entity::render_entity(SDL_Renderer* renderer)
 
     render_components(renderer);
     render(renderer);
+    render_children(renderer);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -225,11 +268,20 @@ void Entity::destroy_entity()
 //--------------------------------------------------------------------------------------------------
 std::weak_ptr<Component> Entity::get_component_by_type(std::type_index type) const
 {
-    auto it = m_component_store.find(type);
-    if (it != m_component_store.end())
+    for (auto const& [key, component] : m_component_store)
     {
-        return it->second;
+        if (key.first == type)
+            return component;
     }
+    return std::weak_ptr<Component>();
+}
+
+//--------------------------------------------------------------------------------------------------
+std::weak_ptr<Component> Entity::get_component_by_type(std::type_index type, std::string_view tag) const
+{
+    auto it = m_component_store.find(ComponentKey{ type, std::string(tag) });
+    if (it != m_component_store.end())
+        return it->second;
     return std::weak_ptr<Component>();
 }
 
@@ -317,6 +369,7 @@ void Entity::fixed_update_entity(float fixed_dt)
 
     fixed_update_components(fixed_dt);
     fixed_update(fixed_dt);
+    fixed_update_children(fixed_dt);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -340,6 +393,7 @@ void Entity::fixed_update_components(float fixed_dt)
 //--------------------------------------------------------------------------------------------------
 void Entity::cleanup_entity()
 {
+    cleanup_children();  // children first, while parent is still valid
     cleanup();
     cleanup_components();
 }
@@ -367,6 +421,85 @@ void Entity::on_component_added() const
 {
     assert(!Engine::get().is_rendering());
     assert(!Engine::get().is_cleaning_up());
+}
+
+//--------------------------------------------------------------------------------------------------
+void Entity::flush_pending_children()
+{
+    if (m_pending_children.empty()) return;
+
+    // Two-pass: awake all, then start all — same contract as Layer::initialize_entities
+    for (auto const& child : m_pending_children)
+    {
+        if (child->get_entity_state() == EState::Pending)
+            child->awake_entity();
+    }
+    for (auto const& child : m_pending_children)
+    {
+        if (child->get_entity_state() == EState::Awoken)
+        {
+            child->start_entity();
+            std::uint8_t priority = child->get_update_order();
+            auto it = std::find_if(m_children.begin(), m_children.end(),
+                [priority](auto const& c){ return c->get_update_order() > priority; });
+            m_children.insert(it, child);
+        }
+    }
+    m_pending_children.clear();
+}
+
+//--------------------------------------------------------------------------------------------------
+void Entity::update_children(float delta_time)
+{
+    for (auto it = m_children.begin(); it != m_children.end(); )
+    {
+        (*it)->update_entity(delta_time);
+        if ((*it)->get_entity_state() == EState::Destroyed)
+        {
+            (*it)->cleanup_entity();
+            it = m_children.erase(it);
+        }
+        else { ++it; }
+    }
+}
+
+//--------------------------------------------------------------------------------------------------
+void Entity::render_children(SDL_Renderer* renderer)
+{
+    for (auto const& child : m_children)
+    {
+        child->render_entity(renderer);
+    }
+}
+
+//--------------------------------------------------------------------------------------------------
+void Entity::fixed_update_children(float fixed_dt)
+{
+    for (auto const& child : m_children)
+    {
+        child->fixed_update_entity(fixed_dt);
+    }
+}
+
+//--------------------------------------------------------------------------------------------------
+void Entity::cleanup_children()
+{
+    for (auto const& child : m_children)
+    {
+        child->cleanup_entity();
+    }
+    m_children.clear();
+    m_pending_children.clear();
+}
+
+//--------------------------------------------------------------------------------------------------
+void Entity::propagate_event_to_children(Event& event)
+{
+    for (auto const& child : m_children)
+    {
+        if (!event.get_handled())
+            child->propagate_event_down(event);
+    }
 }
 
 } // namespace Core

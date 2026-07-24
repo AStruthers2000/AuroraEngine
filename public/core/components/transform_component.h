@@ -16,21 +16,23 @@ namespace Core
 class TransformComponent : public Component
 {
 public:
+    static constexpr bool unique_per_entity = true;
+
     explicit TransformComponent(Entity& owning_entity)
       : Component(owning_entity)
     {
     }
     TransformComponent(Entity& owning_entity, const glm::vec2& position)
       : Component(owning_entity)
-      , m_position(position)
+      , m_local_position(position)
     {
     }
     TransformComponent(Entity& owning_entity,
                        const glm::vec2& position,
                        const glm::vec2& scale)
       : Component(owning_entity)
-      , m_position(position)
-      , m_scale(scale)
+      , m_local_position(position)
+      , m_local_scale(scale)
     {
     }
     // TransformComponent(Entity& owning_entity,
@@ -40,19 +42,25 @@ public:
     //                 //    float rotation = 0.0f,
     //                    const glm::vec2& scale = glm::vec2(1.0f, 1.0f))
     //     : Component(owning_entity)
-    //     , m_position(position)
+    //     , m_local_position(position)
     //     , m_velocity(velocity)
     //     , m_acceleration(acceleration)
     //     //   m_rotation(rotation),
-    //     ,  m_scale(scale)
+    //     ,  m_local_scale(scale)
     // {
     // }
 
     ~TransformComponent() override = default;
 
-    const glm::vec2& get_position() const { return m_position; }
-    void set_position(const glm::vec2& position) { m_position = position; }
-    void update_position(const glm::vec2& delta) { m_position += delta; }
+    const glm::vec2& get_local_position() const { return m_local_position; }
+    void set_local_position(const glm::vec2& position) { m_local_position = position; }
+    void update_local_position(const glm::vec2& delta) { m_local_position += delta; }
+
+    /// @brief Returns the position in world space, accumulated from the parent chain.
+    glm::vec2 get_world_position() const;
+
+    /// @brief Returns the scale in world space, accumulated from the parent chain.
+    glm::vec2 get_world_scale() const;
 
     const glm::vec2& get_velocity() const { return m_velocity; }
     void set_velocity(const glm::vec2& velocity) { m_velocity = velocity; }
@@ -66,16 +74,16 @@ public:
     // void set_rotation(float rotation) { m_rotation = rotation; }
     // void update_rotation(float delta) { m_rotation += delta; }
 
-    const glm::vec2& get_scale() const { return m_scale; }
-    void set_scale(const glm::vec2& scale) { m_scale = scale; }
-    void update_scale(const glm::vec2& delta) { m_scale += delta; }
+    const glm::vec2& get_local_scale() const { return m_local_scale; }
+    void set_local_scale(const glm::vec2& scale) { m_local_scale = scale; }
+    void update_local_scale(const glm::vec2& delta) { m_local_scale += delta; }
 
 private:
-    glm::vec2 m_position{0.0f, 0.0f};
+    glm::vec2 m_local_position{0.0f, 0.0f};
     glm::vec2 m_velocity{0.0f, 0.0f};
     glm::vec2 m_acceleration{0.0f, 0.0f};
     // float m_rotation = 0.0f;
-    glm::vec2 m_scale{1.0f, 1.0f};
+    glm::vec2 m_local_scale{1.0f, 1.0f};
 };
 
 } // namespace Core

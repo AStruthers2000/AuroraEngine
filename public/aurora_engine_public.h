@@ -13,7 +13,7 @@
 #include "core/layer.h"
 #include "core/sdl_color_ops.h"
 
-#include "core/entities/ui/label.h"
+#include "core/entities/label.h"
 
 #include "core/events/events_public.h"
 

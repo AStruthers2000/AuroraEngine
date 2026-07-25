@@ -1,7 +1,7 @@
 #include "aurora_engine_public.h"
 
-#include "core/components/render_components/rect_render_component.h"
-#include "core/components/render_components/text_render_component.h"
+#include "core/components/rect_render_component.h"
+#include "core/components/text_render_component.h"
 
 #include <print>
 

@@ -8,7 +8,7 @@
 #define CORE_ENTITIES_UI_LABEL_H
 
 #include "core/entity.h"
-#include "core/components/render_components/text_render_component.h"
+#include "core/components/text_render_component.h"
 
 #include <string>
 #include <string_view>

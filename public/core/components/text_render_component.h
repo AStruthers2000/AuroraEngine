@@ -3,8 +3,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief Renders a single line of text to the screen during the render phase of each frame.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-#ifndef CORE_COMPONENTS_RENDER_COMPONENTS_TEXT_RENDER_COMPONENT_H
-#define CORE_COMPONENTS_RENDER_COMPONENTS_TEXT_RENDER_COMPONENT_H
+#ifndef CORE_COMPONENTS_TEXT_RENDER_COMPONENT_H
+#define CORE_COMPONENTS_TEXT_RENDER_COMPONENT_H
 
 #include "core/components/render_component.h"
 
@@ -119,4 +119,4 @@ private:
 
 } // namespace Core
 
-#endif // CORE_COMPONENTS_RENDER_COMPONENTS_TEXT_RENDER_COMPONENT_H
+#endif // CORE_COMPONENTS_TEXT_RENDER_COMPONENT_H

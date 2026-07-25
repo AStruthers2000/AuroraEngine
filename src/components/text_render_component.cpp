@@ -21,14 +21,14 @@ TextRenderComponent::TextRenderComponent(Entity& owner, Configuration const& con
 }
 
 //--------------------------------------------------------------------------------------------------
-void TextRenderComponent::awake()
+void TextRenderComponent::on_awake()
 {
     m_owning_transform = get_sibling_component<TransformComponent>();
     m_font = AssetManager::instance().get_font(m_font_path, m_point_size);
 }
 
 //--------------------------------------------------------------------------------------------------
-void TextRenderComponent::render(SDL_Renderer* renderer)
+void TextRenderComponent::on_render(SDL_Renderer* renderer)
 {
     if (!m_cache_valid)
     {
@@ -58,7 +58,7 @@ void TextRenderComponent::render(SDL_Renderer* renderer)
 }
 
 //--------------------------------------------------------------------------------------------------
-void TextRenderComponent::cleanup()
+void TextRenderComponent::on_cleanup()
 {
     if (m_cached_texture)
     {

@@ -1,14 +1,16 @@
-////////////////////////////////////////////////////////////////////////////////////////////////////
+﻿////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Copyright (C) 2026 AStruthers2000 - All Rights Reserved
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// @brief A self-contained entity that renders a single line of text. Intended to be used as
-///        either a root entity on a Layer or as a child entity of a composite UI entity.
+/// @brief A self-contained Entity that renders a single line of text. Intended as either a root
+///        Entity on a Layer or a child of a composite UI Entity.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 #ifndef CORE_ENTITIES_UI_LABEL_H
 #define CORE_ENTITIES_UI_LABEL_H
 
 #include "core/entity.h"
 #include "core/components/text_render_component.h"
+
+#include <glm/glm.hpp>
 
 #include <string>
 #include <string_view>
@@ -17,45 +19,79 @@ namespace Core::UI
 {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// @brief A self-contained entity that renders a single line of text. Intended to be used as
-///        either a root entity on a Layer or as a child entity of a composite UI entity.
+/// @brief A self-contained Entity that renders a single line of text.
+///
+/// Label encapsulates a TransformComponent and a TextRenderComponent into a ready-to-use Entity.
+/// Construct it via Layer::add_entity<Label>() and pass a Configuration to set the position,
+/// font, and initial text.
+///
+/// @note  Configuration inherits @c update_order from Entity::Configuration.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 class Label : public Entity
 {
 public:
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief User-customizable construction parameters for Label. Inherits update_order from
+    // Types
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Construction parameters for Label. Inherits @c update_order from
     ///        Entity::Configuration.
     ////////////////////////////////////////////////////////////////////////////////////////////////
     struct Configuration : Entity::Configuration
     {
+        /// @brief Initial world-space position in pixels.
         glm::vec2 position{ 0.f, 0.f };
+        /// @brief Path to the font file (relative to data root).
         std::string_view font_path{};
+        /// @brief Font size in points.
         int point_size{ 12 };
+        /// @brief Initial text string to display.
         std::string_view text{};
+        /// @brief Initial text color (RGBA).
         SDL_Color color{ 255, 255, 255, 255 };
     };
 
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Constructs a Label. Accepts either a Layer or a parent Entity as owner.
+    // Construction & Destruction
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Constructs a Label.
     ///
-    /// @param [in] owner  - The Layer or parent Entity that will own this Entity.
+    /// @param [in] owner  - The Layer or parent Entity that will own this Label.
     /// @param [in] config - Optional construction parameters.
     ////////////////////////////////////////////////////////////////////////////////////////////////
     Label(Entity::Owner owner, Configuration const& config = {});
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Adds the TextRenderComponent. Called automatically during initialization.
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    virtual void awake() override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Sets the displayed text at runtime.
+    // Virtual Lifecycle Hook Overrides
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Adds a TransformComponent and a TextRenderComponent, wiring them up with the
+    ///        construction-time parameters. Called once during the Entity's awake phase.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void on_awake() override;
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // Runtime API
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Replaces the displayed text at runtime.
+    ///
+    /// @param [in] text - New text string. Single line only.
     ////////////////////////////////////////////////////////////////////////////////////////////////
     void set_text(std::string_view text);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Sets the text color at runtime.
+    /// @brief Changes the text color at runtime.
+    ///
+    /// @param [in] color - New RGBA text color.
     ////////////////////////////////////////////////////////////////////////////////////////////////
     void set_color(SDL_Color color);
 
@@ -65,12 +101,19 @@ public:
     std::string_view get_text() const;
 
 private:
-    // Construction-time parameters, held until awake() wires up the component weak_ptr
+    /// @brief Font file path held until on_awake().
     std::string m_font_path;
+
+    /// @brief Font point size held until on_awake().
     int m_point_size;
+
+    /// @brief Initial text held until on_awake().
     std::string m_initial_text;
+
+    /// @brief Initial color held until on_awake().
     SDL_Color m_initial_color;
 
+    /// @brief Cached TextRenderComponent.
     std::weak_ptr<TextRenderComponent> m_text_component{};
 };
 

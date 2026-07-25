@@ -5,6 +5,7 @@
 
 #include "core/engine.h"
 #include "core/events/event.h"
+#include "core/components/transform_component.h"
 
 #include <ranges>
 
@@ -62,12 +63,6 @@ void Entity::broadcast_event_within_entity(Event& event)
 }
 
 //--------------------------------------------------------------------------------------------------
-void Entity::on_event(Event& event)
-{
-    // Intentionally left blank; virtual function.
-}
-
-//--------------------------------------------------------------------------------------------------
 void Entity::awake_entity()
 {
     if (m_state == EState::Pending)
@@ -81,7 +76,7 @@ void Entity::awake_entity()
         }
 
         awake_components();
-        awake();
+        on_awake();
         m_state = EState::Awoken;
 
         // Awake any children added during construction or awake()
@@ -96,12 +91,6 @@ void Entity::awake_entity()
         std::println("[Entity::awake_entity] awake_entity() called in unexpected state: {}",
                      static_cast<int>(m_state));
     }
-}
-
-//--------------------------------------------------------------------------------------------------
-void Entity::awake()
-{
-    // Intentionally left blank; virtual function.
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -147,7 +136,7 @@ void Entity::start_entity()
     if (m_state == EState::Awoken)
     {
         start_components();
-        start();
+        on_start();
         m_state = EState::Active;
 
         // Start and move to active any children that were awoken above
@@ -172,12 +161,6 @@ void Entity::start_entity()
 }
 
 //--------------------------------------------------------------------------------------------------
-void Entity::start()
-{
-    // Intentionally left blank; virtual function.
-}
-
-//--------------------------------------------------------------------------------------------------
 void Entity::start_components()
 {
     for (std::weak_ptr<Component> const& component : m_update_ordered_components)
@@ -196,19 +179,13 @@ void Entity::update_entity(float delta_time)
 
     awake_components();
     update_components(delta_time);
-    update(delta_time);
+    on_update(delta_time);
     late_update_components(delta_time);
-    late_update(delta_time);
+    on_late_update(delta_time);
 
     // Flush and update children after the parent's full update pass
     flush_pending_children();
     update_children(delta_time);
-}
-
-//--------------------------------------------------------------------------------------------------
-void Entity::update(float delta_time)
-{
-    // Intentionally left blank; virtual function.
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -229,14 +206,8 @@ void Entity::render_entity(SDL_Renderer* renderer)
     if (m_state != EState::Active && m_state != EState::Inactive) return;
 
     render_components(renderer);
-    render(renderer);
+    on_render(renderer);
     render_children(renderer);
-}
-
-//--------------------------------------------------------------------------------------------------
-void Entity::render(SDL_Renderer* renderer)
-{
-    // Intentionally left blank; virtual function.
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -338,12 +309,6 @@ void Entity::set_inactive()
 }
 
 //--------------------------------------------------------------------------------------------------
-void Entity::late_update(float delta_time)
-{
-    // Intentionally left blank; virtual function.
-}
-
-//--------------------------------------------------------------------------------------------------
 void Entity::late_update_components(float delta_time)
 {
     for (std::weak_ptr<Component> component : m_update_ordered_components)
@@ -361,14 +326,8 @@ void Entity::fixed_update_entity(float fixed_dt)
     if (m_state != EState::Active) return;
 
     fixed_update_components(fixed_dt);
-    fixed_update(fixed_dt);
+    on_fixed_update(fixed_dt);
     fixed_update_children(fixed_dt);
-}
-
-//--------------------------------------------------------------------------------------------------
-void Entity::fixed_update(float fixed_dt)
-{
-    // Intentionally left blank; virtual function.
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -387,14 +346,8 @@ void Entity::fixed_update_components(float fixed_dt)
 void Entity::cleanup_entity()
 {
     cleanup_children();  // children first, while parent is still valid
-    cleanup();
+    on_cleanup();
     cleanup_components();
-}
-
-//--------------------------------------------------------------------------------------------------
-void Entity::cleanup()
-{
-    // Intentionally left blank; virtual function.
 }
 
 //--------------------------------------------------------------------------------------------------

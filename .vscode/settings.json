@@ -1,4 +1,8 @@
 {
     "cmake.configureOnOpen": false,
-    "cmake.useCMakePresets": "always"
+    "cmake.useCMakePresets": "always",
+    "cSpell.words": [
+        "rasterizes",
+        "renderable"
+    ],
 }

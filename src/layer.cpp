@@ -55,22 +55,10 @@ void Layer::broadcast_event_within_layer(Event& event)
 }
 
 //--------------------------------------------------------------------------------------------------
-void Layer::on_event(Event& event)
-{
-    // Intentionally left blank; virtual function.
-}
-
-//--------------------------------------------------------------------------------------------------
 void Layer::initialize_layer()
 {
     initialize_entities();
-    initialize();
-}
-
-//--------------------------------------------------------------------------------------------------
-void Layer::initialize()
-{
-    // Intentionally left blank; virtual function.
+    on_initialize();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -112,21 +100,9 @@ void Layer::update_layer(float delta_time)
 {
     if (m_paused) return;
 
-    update(delta_time);
+    on_update(delta_time);
     update_entities(delta_time);
-    late_update(delta_time);
-}
-
-//--------------------------------------------------------------------------------------------------
-void Layer::update(float delta_time)
-{
-    // Intentionally left blank; virtual function.
-}
-
-//--------------------------------------------------------------------------------------------------
-void Layer::late_update(float delta_time)
-{
-    // Intentionally left blank; virtual function.
+    on_late_update(delta_time);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -160,13 +136,7 @@ void Layer::update_entities(float delta_time)
 void Layer::render_layer(SDL_Renderer* renderer)
 {
     render_entities(renderer);
-    render(renderer);
-}
-
-//--------------------------------------------------------------------------------------------------
-void Layer::render(SDL_Renderer* renderer)
-{
-    // Intentionally left blank; virtual function.
+    on_render(renderer);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -182,13 +152,7 @@ void Layer::render_entities(SDL_Renderer* renderer)
 void Layer::cleanup_layer()
 {
     cleanup_entities();
-    cleanup();
-}
-
-//--------------------------------------------------------------------------------------------------
-void Layer::cleanup()
-{
-    // Intentionally left blank; virtual function.
+    on_cleanup();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -225,13 +189,7 @@ void Layer::fixed_update_layer(float fixed_dt)
 {
     if (m_paused) return;
     fixed_update_entities(fixed_dt);
-    fixed_update(fixed_dt);
-}
-
-//--------------------------------------------------------------------------------------------------
-void Layer::fixed_update(float fixed_dt)
-{
-    // Intentionally left blank; virtual function.
+    on_fixed_update(fixed_dt);
 }
 
 //--------------------------------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////////////////////////////////////////////
+﻿////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Copyright (C) 2026 AStruthers2000 - All Rights Reserved
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief Base Layer class. Owns Entities and updates them as part of the core Engine.
@@ -14,8 +14,7 @@
 namespace Core
 {
 
-/// @brief Default sorting order for Entities and Components. Smaller numbers update/render/etc.
-///        earlier.
+/// @brief Default sorting order for Entities and Components. Smaller values update/render earlier.
 constexpr std::uint8_t DEFAULT_SORTING_ORDER = 100;
 
 class Engine;
@@ -23,166 +22,176 @@ class Entity;
 class Event;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// @brief Base Layer class. Owns Entities and updates them as part of the core Engine. Override
-///        initialize(), update(), late_update(), fixed_update(), render(), and/or cleanup() for
-///        custom behavior.
+/// @brief Base Layer class. Layers own Entities and participate in the Engine's main loop.
+///
+/// A Layer is a logical scene partition - e.g. a gameplay layer, a HUD layer, or a pause menu.
+/// The Engine drives all active Layers through the same lifecycle each frame. To create a Layer,
+/// derive from Layer and override the virtual lifecycle hooks (on_initialize, on_update, etc.);
+/// then push an instance onto the Engine via Engine::push_layer<T>().
+///
+/// @note  Layers are paused via set_paused(true), which suppresses on_update() and
+///        on_fixed_update() while allowing on_render() to continue running.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 class Layer : public std::enable_shared_from_this<Layer>
 {
 public:
     ////////////////////////////////////////////////////////////////////////////////////////////////
+    // Construction & Destruction
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Layer constructor.
     ///
-    /// @param [in] owning_engine - Layer must know what engine owns it.
+    /// @param [in] owning_engine - The Engine that owns this Layer.
     ////////////////////////////////////////////////////////////////////////////////////////////////
     explicit Layer(Engine& owning_engine);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Layer destructor.
+    /// @brief Layer destructor. Virtual to support polymorphic deletion.
     ////////////////////////////////////////////////////////////////////////////////////////////////
     virtual ~Layer();
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Broadcasts an event to the Event system.
-    ///
-    /// @param [in] event - Event to be broadcasted.
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    void broadcast_event(Event& event);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Passes Events on to Entities in order before trying to handle the Event. Called by
-    ///        the Engine during event broadcasting.
+    // Virtual Lifecycle Hooks
+    //
+    // Override these to implement custom Layer behavior. The engine drives Layers through the
+    // non-virtual orchestrators (initialize_layer, update_layer, etc.) - override these hooks,
+    // not those orchestrators.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Initialization hook. Called once when this Layer is pushed onto the Engine and all
+    ///        initially-pending Entities have completed their awake + start passes.
     ///
-    /// @param [in] event - Event that will be passed down to Entities on this Layer.
-    //////////////////////////////////////////////////////////////////////////////////////////////// 
-    void propagate_event_down(Event& event);
+    /// @note  Use this override to:
+    ///         - Spawn and configure the initial set of Entities for this Layer.
+    ///         - Load layer-scoped resources (textures, audio, etc.).
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    virtual void on_initialize() {}
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Per-frame update hook. Called every frame while the Layer is not paused.
+    ///
+    /// @note  Runs after all Entity on_update() calls for this frame have completed.
+    ///
+    /// @param [in] delta_time - Seconds elapsed since the last frame.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    virtual void on_update(float delta_time) {}
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Per-frame late-update hook. Called every frame after on_update() and after all
+    ///        Entity and Component late-update passes have completed.
+    ///
+    /// @note  Use this to read fully-resolved per-frame state before presenting.
+    ///
+    /// @param [in] delta_time - Seconds elapsed since the last frame.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    virtual void on_late_update(float delta_time) {}
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Fixed-rate update hook. Called at a fixed timestep, independent of frame rate.
+    ///        Skipped when the Layer is paused.
+    ///
+    /// @note  Use this for physics or simulation logic that requires a stable timestep.
+    ///
+    /// @param [in] fixed_dt - The fixed timestep in seconds.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    virtual void on_fixed_update(float fixed_dt) {}
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Per-frame render hook. Called every frame, including when the Layer is paused.
+    ///
+    /// @note  Must not: mutate engine state. Render passes are read-only.
+    ///
+    /// @param [in] renderer - The SDL renderer for the current frame.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    virtual void on_render(SDL_Renderer* renderer) {}
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Cleanup hook. Called once when this Layer is popped from the Engine, before all
+    ///        owned Entities are destroyed.
+    ///
+    /// @note  Use this to release layer-scoped resources loaded during on_initialize().
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    virtual void on_cleanup() {}
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Event hook. Called when an event is broadcast engine-wide or propagated to this
+    ///        Layer. Entities on this Layer receive the event first via propagate_event_down(),
+    ///        then this hook is called.
+    ///
+    /// @note  Use an EventDispatcher inside this override to route events to typed handler
+    ///        lambdas. Return @c true from a dispatch handler to mark the event handled.
+    ///
+    /// @param [in] event - The event being propagated.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    virtual void on_event(Event& event) {}
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // State & Control
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Pauses or unpauses this Layer. When paused, on_update() and on_fixed_update() are
+    ///        suppressed for this Layer and all its Entities. on_render() continues to run.
+    ///
+    /// @param [in] paused - @c true to pause, @c false to unpause.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void set_paused(bool paused) { m_paused = paused; }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @return @c true if this Layer is currently paused.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    bool is_paused() const { return m_paused; }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @return A reference to the Engine that owns this Layer.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    Engine& get_engine() { return m_engine; }
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // Events
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Broadcasts an event engine-wide. Propagates to all active Layers (including this
+    ///        one) and their Entities.
+    ///
+    /// @param [in] event - The event to broadcast.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void broadcast_event(Event& event);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Broadcasts an event within this Layer only, without propagating to the Engine root.
     ///        Entities on this Layer and this Layer's own on_event() are called; other Layers are
     ///        unaffected.
     ///
-    /// @param [in] event - Event to be broadcast within this Layer.
+    /// @param [in] event - The event to broadcast within this Layer.
     ////////////////////////////////////////////////////////////////////////////////////////////////
     void broadcast_event_within_layer(Event& event);
 
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Runs any Event-handling-specific code. Allows Layers to dispatch Events. Called from
-    ///        Layer::propagate_event_down(). Overridable.
+    // Entity Management
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Constructs and adds an Entity of type TEntity to this Layer. The Entity is held in
+    ///        a pending queue until the next initialization pass (beginning of the next frame),
+    ///        at which point awake_entity() and start_entity() are called.
     ///
-    /// @param [in] event - Event that was broadcast to the Event system.
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    virtual void on_event(Event& event);
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Initializes this Layer. Initializes all currently-pending Entities. Not overridable.
-    //////////////////////////////////////////////////////////////////////////////////////////////// 
-    void initialize_layer();
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Runs any Layer-specific initialization code. Called from Layer::initialize_layer().
-    ///        Overridable.
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    virtual void initialize();
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Updates this Layer. Called from owning Engine. Not overridable.
+    /// @note  Can be called at any time except during cleanup. Entities added during on_update()
+    ///        are initialized at the start of the next frame.
     ///
-    /// @param [in] delta_time - Time since last update. 
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    void update_layer(float delta_time);
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Runs any Layer-specific update code. Called from Layer::update_layer(). Overridable.
+    /// @tparam TEntity The Entity type to construct. Must be derived from Entity.
     ///
-    /// @param [in] delta_time - Time since last update. 
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    virtual void update(float delta_time);
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Runs any Layer-specific late-update code. Called from Layer::update_layer(), after
-    ///        update() and after all Entity and Component late updates. Overridable.
+    /// @param [in] config - Construction parameters forwarded to the TEntity constructor.
+    ///                      Defaults to a default-constructed TEntity::Configuration.
     ///
-    /// @param [in] delta_time - Time since last update.
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    virtual void late_update(float delta_time);
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Fixed-rate updates this Layer. Called from owning Engine at a fixed timestep. Not
-    ///        overridable. Skipped when the Layer is paused.
-    ///
-    /// @param [in] fixed_dt - The fixed timestep interval.
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    void fixed_update_layer(float fixed_dt);
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Runs any Layer-specific fixed-rate update code. Called from
-    ///        Layer::fixed_update_layer(). Overridable.
-    ///
-    /// @param [in] fixed_dt - The fixed timestep interval.
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    virtual void fixed_update(float fixed_dt);
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Pauses or unpauses this Layer. When paused, update_layer() and fixed_update_layer()
-    ///        are skipped entirely. Render continues to run.
-    ///
-    /// @param [in] paused - true to pause, false to unpause.
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    void set_paused(bool paused) { m_paused = paused; }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @return Returns true if this Layer is currently paused.
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    bool is_paused() const { return m_paused; }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Renders this Layer. Called from owning Engine. Not overridable.
-    ///
-    /// @param [in] renderer - Renderer provided by the owning Engine. 
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    void render_layer(SDL_Renderer* renderer);
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Runs any Layer-specific render code. Called from Layer::render_layer(). Overridable.
-    ///
-    /// @param [in] renderer - Renderer provided by the owning Engine. 
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    virtual void render(SDL_Renderer* renderer);
-    
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Cleans up this Layer instance. Called from owning Engine. Not overridable.
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    void cleanup_layer();
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Runs any Layer-specific cleanup code. Called from Layer::cleanup_layer().
-    ///        Overridable.
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    virtual void cleanup();
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Adds an Entity to this Layer. Layer assumes ownership of the Entity. Entities are
-    ///        added to a collection of pending Entities; each pending Entity will get initialized
-    ///        (i.e. `Entity::initialize()`) at the beginning of the next frame.
-    ///
-    /// @param [in] entity - Entity to be added to this Layer.
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Adds an Entity to this Layer. Constructs an Entity of type TEntity. Entities are
-    ///        added to a collection of pending Entities; each pending Entity will get initialized
-    ///        (i.e. `Entity::initialize()`) at the beginning of the next frame.
-    ///
-    /// @tparam TEntity Templated Entity type to construct and attach. Requires that this type is
-    ///                 derived from Entity.
-    /// @tparam ...Args Types of arguments to forward to the TEntity constructor; automatically
-    ///                 deduced.
-    ///
-    /// @param [in] args - Arguments forwarded to the TEntity constructor.
-    ///
-    /// @return Returns a std::weak_ptr<TEntity> to the newly created Entity (safe for long-term
-    ///         storage).
+    /// @return A @c std::weak_ptr<TEntity> to the newly created Entity.
     ////////////////////////////////////////////////////////////////////////////////////////////////
     template <typename TEntity>
     requires(std::derived_from<TEntity, Entity>)
@@ -194,70 +203,141 @@ public:
         return entity_ptr;
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief 
-    /// @param entity 
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    // void remove_entity(std::shared_ptr<Entity> entity);
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @return Returns a reference to the Engine that owns this Layer.
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    Engine& get_engine() { return m_engine; }
-
 private:
+    friend class Engine;
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Initializes all the Entities owned by this Layer. Called from
-    ///        Layer::initialize_layer(). Not overridable.
+    // Engine Functions
+    //
+    // Called by the owning Engine to drive this Layer through its lifecycle. Access is restricted
+    // to Engine via the friend declaration above.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Initializes this Layer: flushes all pending Entities through their awake + start
+    ///        passes, then calls on_initialize(). Called once when the Layer is pushed onto the
+    ///        Engine.
+    ///
+    /// @note  Called by: Engine::initialize_pending_layers().
+    /// @note  Not overridable. Override on_initialize() to inject custom behavior.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void initialize_layer();
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Drives the per-frame update. Flushes pending Entities, updates all active Entities,
+    ///        and calls on_update() and on_late_update(). Skipped when paused.
+    ///
+    /// @note  Called by: Engine::update() every frame.
+    /// @note  Not overridable. Override on_update() / on_late_update() for custom behavior.
+    ///
+    /// @param [in] delta_time - Seconds elapsed since the last frame.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void update_layer(float delta_time);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Drives fixed-rate updates. Updates all active Entities at the fixed timestep and
+    ///        calls on_fixed_update(). Skipped when paused.
+    ///
+    /// @note  Called by: Engine::fixed_update() at a fixed timestep.
+    /// @note  Not overridable. Override on_fixed_update() for custom behavior.
+    ///
+    /// @param [in] fixed_dt - The fixed timestep in seconds.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void fixed_update_layer(float fixed_dt);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Drives the per-frame render pass. Renders all active Entities and calls on_render().
+    ///
+    /// @note  Called by: Engine::render() every frame.
+    /// @note  Not overridable. Override on_render() for custom render behavior.
+    ///
+    /// @param [in] renderer - The SDL renderer for the current frame.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void render_layer(SDL_Renderer* renderer);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Tears down this Layer: calls on_cleanup() then cleans up all owned Entities.
+    ///        Called when this Layer is popped from the Engine.
+    ///
+    /// @note  Called by: Engine::apply_pending_transitions() or Engine::~Engine().
+    /// @note  Not overridable. Override on_cleanup() for custom teardown logic.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void cleanup_layer();
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Passes an event down to all Entities on this Layer, then calls on_event(). Called
+    ///        by the Engine during a broadcast.
+    ///
+    /// @note  Called by: Engine::broadcast_event() or Layer::broadcast_event_within_layer().
+    ///
+    /// @param [in] event - The event to propagate.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void propagate_event_down(Event& event);
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // Private Helpers
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Flushes pending Entities into the active list by calling awake_entity() then
+    ///        start_entity() on each. Preserves update-order sort.
+    ///
+    /// @note  Called by: update_layer() (once per frame) and initialize_layer().
     ////////////////////////////////////////////////////////////////////////////////////////////////
     void initialize_entities();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Updates all the Entities owned by this Layer. Called from Layer::update_layer(). Not
-    ///        overridable.
+    /// @brief Calls update_entity() on all active, non-Destroyed Entities.
     ///
-    /// @param [in] delta_time - Time since last update. 
+    /// @param [in] delta_time - Seconds elapsed since the last frame.
     ////////////////////////////////////////////////////////////////////////////////////////////////
     void update_entities(float delta_time);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Fixed-updates all Entities. Called from Layer::fixed_update_layer(). Not overridable.
+    /// @brief Calls fixed_update_entity() on all active, non-Destroyed Entities.
     ///
-    /// @param [in] fixed_dt - The fixed timestep interval.
+    /// @param [in] fixed_dt - The fixed timestep in seconds.
     ////////////////////////////////////////////////////////////////////////////////////////////////
     void fixed_update_entities(float fixed_dt);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Renders all the Entities owned by this Layer. Called from Layer::render_layer(). Not
-    ///        overridable.
+    /// @brief Calls render_entity() on all active, non-Destroyed Entities.
     ///
-    /// @param [in] renderer - Renderer provided by the owning Engine. 
+    /// @param [in] renderer - The SDL renderer for the current frame.
     ////////////////////////////////////////////////////////////////////////////////////////////////
     void render_entities(SDL_Renderer* renderer);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Cleans up all the Entities owned by this Layer. Called from
-    ///        Layer::cleanup_layer(). Not overridable.
+    /// @brief Calls cleanup_entity() on all Entities marked Destroyed, then clears the active
+    ///        list.
     ////////////////////////////////////////////////////////////////////////////////////////////////
     void cleanup_entities();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Called from add_entity<T>(). Asserts the engine is not rendering or cleaning up.
+    /// @brief Assertion guard called from add_entity<T>(). Asserts the Engine is not currently in
+    ///        a render or cleanup pass when the Entity is being added.
     ////////////////////////////////////////////////////////////////////////////////////////////////
     void on_entity_added() const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Moves an Entity from the pending Entities collection into the active Entities
-    ///        collection, while respecting Entity update sorting order.
-    /// 
-    /// @param [in] entity - The Entity that will be moved to the active Entities collection.  
+    /// @brief Inserts a freshly-initialized Entity into the active Entity list in update-order
+    ///        sorted position.
+    ///
+    /// @param [in] entity - The Entity to insert.
     ////////////////////////////////////////////////////////////////////////////////////////////////
     void move_entity_to_active(std::shared_ptr<Entity> entity);
 
+    /// @brief The Engine that owns this Layer.
     Engine& m_engine;
+
+    /// @brief When true, update and fixed-update passes are suppressed.
     bool m_paused{ false };
 
+    /// @brief Entities awaiting initialization.
     std::vector<std::shared_ptr<Entity>> m_pending_entities{};
+
+    /// @brief Active Entities, sorted by update_order.
     std::vector<std::shared_ptr<Entity>> m_entities{};
 };
 

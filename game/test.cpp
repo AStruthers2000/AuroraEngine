@@ -33,7 +33,7 @@ public:
         // std::println("Test component has been destroyed");
     }
 
-    virtual void on_event(Core::Event& event)
+    virtual void on_event(Core::Event& event) override
     {
         Core::EventDispatcher dispatcher(event);
         dispatcher.dispatch<Core::MouseMovedEvent>(
@@ -64,32 +64,32 @@ public:
         );
     }
 
-    virtual void awake() override
+    virtual void on_awake() override
     {
         // std::println("Test component initialized");
     }
 
-    virtual void update(float delta_time) override
+    virtual void on_update(float delta_time) override
     {
         // std::println("Test component updating");
     }
 
-    virtual void late_update(float delta_time) override
+    virtual void on_late_update(float delta_time) override
     {
         // std::println("Test component late updating");
     }
 
-    virtual void fixed_update(float fixed_dt) override
+    virtual void on_fixed_update(float fixed_dt) override
     {
         // std::println("Test component fixed updating");
     }
 
-    virtual void render(SDL_Renderer* renderer) override
+    virtual void on_render(SDL_Renderer* renderer) override
     {
         // std::println("Test component rendering");
     }
 
-    virtual void cleanup() override
+    virtual void on_cleanup() override
     {
         // std::println("Test component cleaning up");
     }
@@ -194,7 +194,7 @@ public:
         );
     }
 
-    virtual void awake() override
+    virtual void on_awake() override
     {
         add_component<TestComponent>("");
 
@@ -208,17 +208,17 @@ public:
         // std::println("Test entity initialized");
     }
 
-    virtual void update(float delta_time) override
+    virtual void on_update(float delta_time) override
     {
         // std::println("Test entity updating");
     }
 
-    virtual void late_update(float delta_time) override
+    virtual void on_late_update(float delta_time) override
     {
         // std::println("Test entity late updating");
     }
 
-    virtual void fixed_update(float fixed_dt) override
+    virtual void on_fixed_update(float fixed_dt) override
     {
         // std::println("Test entity fixed updating");
         float length = glm::length(move_dir);
@@ -241,12 +241,12 @@ public:
         }
     }
 
-    virtual void render(SDL_Renderer* renderer) override
+    virtual void on_render(SDL_Renderer* renderer) override
     {
         // std::println("Test entity rendering");
     }
 
-    virtual void cleanup() override
+    virtual void on_cleanup() override
     {
         // std::println("Test entity cleaning up");
     }
@@ -281,33 +281,33 @@ public:
         );
     }
 
-    virtual void initialize() override
+    virtual void on_initialize() override
     {
         // std::println("Test layer initialized");
         add_entity<TestEntity>();
     }
 
-    virtual void update(float delta_time) override
+    virtual void on_update(float delta_time) override
     {
         // std::println("Test layer updating");
     }
 
-    virtual void late_update(float delta_time) override
+    virtual void on_late_update(float delta_time) override
     {
         // std::println("Test layer late updating");
     }
 
-    virtual void fixed_update(float fixed_dt) override
+    virtual void on_fixed_update(float fixed_dt) override
     {
         // std::println("Test layer fixed updating");
     }
 
-    virtual void render(SDL_Renderer* renderer) override
+    virtual void on_render(SDL_Renderer* renderer) override
     {
         // std::println("Test layer rendering");
     }
 
-    virtual void cleanup() override
+    virtual void on_cleanup() override
     {
         // std::println("Test layer cleaning up");
     }

@@ -8,20 +8,6 @@
 namespace Core
 {
 
-// //--------------------------------------------------------------------------------------------------
-// Component::Component(Entity& owning_entity)
-//     : m_owner(owning_entity)
-//     , m_order()
-// {
-// }
-
-// //--------------------------------------------------------------------------------------------------
-// Component::Component(Entity& owning_entity, Order const& component_order)
-//     : m_owner(owning_entity)
-//     , m_order(component_order)
-// {
-// }
-
 //--------------------------------------------------------------------------------------------------
 Component::Component(Entity& owner, Configuration const& config)
     : m_owner(owner)
@@ -51,93 +37,45 @@ void Component::broadcast_event_within_entity(Event& event)
 }
 
 //--------------------------------------------------------------------------------------------------
-void Component::on_event(Event& event)
-{
-    // Intentionally left blank; virtual function.
-}
-
-//--------------------------------------------------------------------------------------------------
 void Component::awake_component()
 {
-    awake();
-}
-
-//--------------------------------------------------------------------------------------------------
-void Component::awake()
-{
-    // Intentionally left blank; virtual function.
+    on_awake();
 }
 
 //--------------------------------------------------------------------------------------------------
 void Component::start_component()
 {
-    start();
-}
-
-//--------------------------------------------------------------------------------------------------
-void Component::start()
-{
-    // Intentionally left blank; virtual function.
+    on_start();
 }
 
 //--------------------------------------------------------------------------------------------------
 void Component::update_component(float delta_time)
 {
-    update(delta_time);
-}
-
-//--------------------------------------------------------------------------------------------------
-void Component::update(float delta_time)
-{
-    // Intentionally left blank; virtual function.
+    on_update(delta_time);
 }
 
 //--------------------------------------------------------------------------------------------------
 void Component::render_component(SDL_Renderer* renderer)
 {
-    render(renderer);
-}
-
-//--------------------------------------------------------------------------------------------------
-void Component::render(SDL_Renderer* renderer)
-{
-    // Intentionally left blank; virtual function.
+    on_render(renderer);
 }
 
 //--------------------------------------------------------------------------------------------------
 void Component::late_update_component(float delta_time)
 {
-    late_update(delta_time);
-}
-
-//--------------------------------------------------------------------------------------------------
-void Component::late_update(float delta_time)
-{
-    // Intentionally left blank; virtual function.
+    on_late_update(delta_time);
 }
 
 //--------------------------------------------------------------------------------------------------
 void Component::fixed_update_component(float fixed_dt)
 {
-    fixed_update(fixed_dt);
-}
-
-//--------------------------------------------------------------------------------------------------
-void Component::fixed_update(float fixed_dt)
-{
-    // Intentionally left blank; virtual function.
+    on_fixed_update(fixed_dt);
 }
 
 //--------------------------------------------------------------------------------------------------
 void Component::cleanup_component()
 {
-    cleanup();
-}
-
-//--------------------------------------------------------------------------------------------------
-void Component::cleanup()
-{
-    // Intentionally left blank; virtual function.
+    on_cleanup();
 }
 
 } // namespace Core

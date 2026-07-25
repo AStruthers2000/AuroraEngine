@@ -1,7 +1,8 @@
-////////////////////////////////////////////////////////////////////////////////////////////////////
+﻿////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Copyright (C) 2026 AStruthers2000 - All Rights Reserved
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// @brief Renders a rectangle to the screen during the render phase of each frame.
+/// @brief Renders a filled rectangle to the screen using the sibling TransformComponent for
+///        position and size.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 #ifndef CORE_COMPONENTS_RECT_RENDER_COMPONENT_H
 #define CORE_COMPONENTS_RECT_RENDER_COMPONENT_H
@@ -14,48 +15,73 @@ namespace Core
 class TransformComponent;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// @brief Renders a filled rectangle to the screen during the render phase of each frame.
+/// @brief Renders a filled rectangle to the screen during the render pass of each frame.
+///
+/// RectRenderComponent reads position and size from its sibling TransformComponent and draws a
+/// solid-color filled rectangle via the SDL renderer. The TransformComponent reference is cached
+/// during on_awake().
+///
+/// @note  Requires a sibling TransformComponent on the same Entity. Missing one is an assertion
+///        failure at initialization time.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 class RectRenderComponent : public RenderComponent
 {
 public:
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // Types
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Construction parameters for RectRenderComponent.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
     struct Configuration : public RenderComponent::Configuration
     {
+        /// @brief Fill color of the rendered rectangle (RGBA).
         SDL_Color color{ 255, 255, 255, 255 };
     };
 
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief The rectangle render component renders a filled rectangle to the screen during the
-    ///        render phase of each frame. The size and position of the rectangle are determined by
-    ///        the sibling TransformComponent.
+    // Construction & Destruction
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Constructs a RectRenderComponent.
     ///
-    /// @param [in] owning_entity   - The Entity that owns this Component instance. Passed to parent
-    ///                               constructor.
-    /// @param [in] component_order - The sorting order mapping this Component will follow. Passed
-    ///                               to parent constructor.
-    /// @param [in] rect_color      - Color of the filled rectangle.
+    /// @param [in] owner  - The Entity that owns this Component.
+    /// @param [in] config - Optional construction parameters including fill color and sort order.
     ////////////////////////////////////////////////////////////////////////////////////////////////
     explicit RectRenderComponent(Entity& owner, Configuration const& config = {});
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Initializes this render component by getting a reference to the sibling
-    ///        TransformComponent.
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    virtual void awake() override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Renders a filled rectangle to the screen. Uses the sibling TransformComponent to
-    ///        determine position/scale.
-    ///
-    /// @param [in] renderer - Renderer provided by the owning Entity. 
+    // Virtual Lifecycle Hook Overrides
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    virtual void render(SDL_Renderer* renderer) override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Caches a weak_ptr to the sibling TransformComponent. Called once during the Entity's
+    ///        awake phase.
+    ///
+    /// @note  Asserts that a TransformComponent sibling exists.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void on_awake() override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Renders a filled rectangle using the sibling TransformComponent's world position and
+    ///        world scale * size as the rectangle bounds.
+    ///
+    /// @param [in] renderer - The SDL renderer for the current frame.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void on_render(SDL_Renderer* renderer) override;
 
 private:
+    /// @brief Fill color of the rectangle.
     SDL_Color m_color{};
+
+    /// @brief Cached sibling TransformComponent.
     std::weak_ptr<TransformComponent> m_owning_transform{};
 };
 
 } // namespace Core
 
-# endif // CORE_COMPONENTS_RECT_RENDER_COMPONENT_H
+#endif // CORE_COMPONENTS_RECT_RENDER_COMPONENT_H

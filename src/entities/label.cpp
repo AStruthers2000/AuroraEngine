@@ -20,7 +20,7 @@ Label::Label(Entity::Owner owner, Configuration const& config)
 }
 
 //--------------------------------------------------------------------------------------------------
-void Label::awake()
+void Label::on_awake()
 {
     // Component::Order order{};
     // m_text_component = add_component<TextRenderComponent>(

@@ -8,17 +8,24 @@
 namespace Core
 {
 
-//--------------------------------------------------------------------------------------------------
-Component::Component(Entity& owning_entity)
-    : m_owner(owning_entity)
-    , m_order()
-{
-}
+// //--------------------------------------------------------------------------------------------------
+// Component::Component(Entity& owning_entity)
+//     : m_owner(owning_entity)
+//     , m_order()
+// {
+// }
+
+// //--------------------------------------------------------------------------------------------------
+// Component::Component(Entity& owning_entity, Order const& component_order)
+//     : m_owner(owning_entity)
+//     , m_order(component_order)
+// {
+// }
 
 //--------------------------------------------------------------------------------------------------
-Component::Component(Entity& owning_entity, Order const& component_order)
-    : m_owner(owning_entity)
-    , m_order(component_order)
+Component::Component(Entity& owner, Configuration const& config)
+    : m_owner(owner)
+    , m_order(config.order)
 {
 }
 

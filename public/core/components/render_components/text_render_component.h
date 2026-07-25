@@ -28,6 +28,14 @@ class TransformComponent;
 class TextRenderComponent : public RenderComponent
 {
 public:
+    struct Configuration : public RenderComponent::Configuration
+    {
+        std::string_view font_path{};
+        int point_size{ 12 };
+        std::string_view text{};
+        SDL_Color color{ 255, 255, 255, 255 };
+    };
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Constructs a TextRenderComponent.
     ///
@@ -41,12 +49,7 @@ public:
     /// @param [in] text            - Initial text string to render. Single line only.
     /// @param [in] color           - RGBA color of the rendered text.
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    TextRenderComponent(Entity& owning_entity,
-                        Order const& component_order,
-                        std::string_view font_path,
-                        int point_size,
-                        std::string_view text,
-                        SDL_Color color);
+    explicit TextRenderComponent(Entity& owner, Configuration const& config = {});
 
     ~TextRenderComponent() override = default;
 

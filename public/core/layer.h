@@ -184,12 +184,12 @@ public:
     /// @return Returns a std::weak_ptr<TEntity> to the newly created Entity (safe for long-term
     ///         storage).
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    template <typename TEntity, typename... Args>
+    template <typename TEntity>
     requires(std::derived_from<TEntity, Entity>)
-    std::weak_ptr<TEntity> add_entity(Args&&... args)
+    std::weak_ptr<TEntity> add_entity(typename TEntity::Configuration config = {})
     {
         on_entity_added();
-        auto entity_ptr = std::make_shared<TEntity>(*this, std::forward<Args>(args)...);
+        auto entity_ptr = std::make_shared<TEntity>(*this, config);
         m_pending_entities.push_back(entity_ptr);
         return entity_ptr;
     }

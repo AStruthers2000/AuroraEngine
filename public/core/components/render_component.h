@@ -14,7 +14,12 @@ namespace Core
 class RenderComponent : public Component
 {
 public:
-    RenderComponent(Entity& owning_entity, Order const& component_order);
+    struct Configuration : public Component::Configuration
+    {
+
+    };
+
+    explicit RenderComponent(Entity& owner, Configuration const& config = {});
 };
 
 } // namespace Core

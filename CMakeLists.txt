@@ -31,7 +31,7 @@ add_library(AuroraEngine
     ${PROJECT_SOURCE_DIR}/src/components/render_components/text_render_component.cpp
 
     # Entities
-    ${PROJECT_SOURCE_DIR}/src/entities/label_entity.cpp
+    ${PROJECT_SOURCE_DIR}/src/entities/ui/label.cpp
 
     # Events
     ${PROJECT_SOURCE_DIR}/public/core/events/event.h

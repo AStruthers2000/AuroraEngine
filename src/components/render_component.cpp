@@ -7,10 +7,9 @@ namespace Core
 {
 
 //--------------------------------------------------------------------------------------------------
-RenderComponent::RenderComponent(Entity& owning_entity, Order const& component_order)
-    : Component(owning_entity, component_order)
+RenderComponent::RenderComponent(Entity& owner, Configuration const& config)
+    : Component(owner, config)
 {
-
 }
 
 } // namespace Core

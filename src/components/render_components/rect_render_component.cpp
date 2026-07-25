@@ -9,9 +9,9 @@ namespace Core
 {
 
 //--------------------------------------------------------------------------------------------------
-RectRenderComponent::RectRenderComponent(Entity& owning_entity, Order const& component_order, SDL_Color rect_color)
-    : RenderComponent(owning_entity, component_order)
-    , m_color(rect_color)
+RectRenderComponent::RectRenderComponent(Entity& owner, Configuration const& config)
+    : RenderComponent(owner, config)
+    , m_color(config.color)
 {
 }
 

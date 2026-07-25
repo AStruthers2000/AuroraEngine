@@ -11,17 +11,12 @@ namespace Core
 {
 
 //--------------------------------------------------------------------------------------------------
-TextRenderComponent::TextRenderComponent(Entity& owning_entity,
-                                         Order const& component_order,
-                                         std::string_view font_path,
-                                         int point_size,
-                                         std::string_view text,
-                                         SDL_Color color)
-    : RenderComponent(owning_entity, component_order)
-    , m_font_path(font_path)
-    , m_point_size(point_size)
-    , m_text(text)
-    , m_color(color)
+TextRenderComponent::TextRenderComponent(Entity& owner, Configuration const& config)
+    : RenderComponent(owner, config)
+    , m_font_path(config.font_path)
+    , m_point_size(config.point_size)
+    , m_text(config.text)
+    , m_color(config.color)
 {
 }
 

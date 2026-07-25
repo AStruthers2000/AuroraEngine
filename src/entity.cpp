@@ -12,17 +12,10 @@ namespace Core
 {
 
 //--------------------------------------------------------------------------------------------------
-Entity::Entity(Layer& owning_layer, std::uint8_t update_order)
-    : m_owning_layer(owning_layer)
-    , m_update_order(update_order)
-{
-}
-
-//--------------------------------------------------------------------------------------------------
-Entity::Entity(Entity& owning_parent, std::uint8_t update_order)
-    : m_owning_layer(owning_parent.get_owning_layer())
-    , m_parent(&owning_parent)
-    , m_update_order(update_order)
+Entity::Entity(Owner owner, Configuration const& config)
+    : m_owning_layer(owner.layer())
+    , m_parent(owner.parent())
+    , m_update_order(config.update_order)
 {
 }
 

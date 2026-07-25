@@ -19,6 +19,11 @@ class TransformComponent;
 class RectRenderComponent : public RenderComponent
 {
 public:
+    struct Configuration : public RenderComponent::Configuration
+    {
+        SDL_Color color{ 255, 255, 255, 255 };
+    };
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief The rectangle render component renders a filled rectangle to the screen during the
     ///        render phase of each frame. The size and position of the rectangle are determined by
@@ -30,7 +35,7 @@ public:
     ///                               to parent constructor.
     /// @param [in] rect_color      - Color of the filled rectangle.
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    RectRenderComponent(Entity& owning_entity, Order const& component_order, SDL_Color rect_color);
+    explicit RectRenderComponent(Entity& owner, Configuration const& config = {});
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Initializes this render component by getting a reference to the sibling

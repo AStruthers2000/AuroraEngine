@@ -39,6 +39,11 @@ public:
         std::uint8_t render_order = DEFAULT_SORTING_ORDER;
     };
 
+    struct Configuration
+    {
+        Order order{};
+    };
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief When true, the owning Entity enforces at most one Component of this derived type,
     ///        regardless of tag. Set to true in a derived Component class to prevent duplicates.
@@ -50,7 +55,7 @@ public:
     ///
     /// @param [in] owning_entity - The Entity that owns this Component instance.
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    explicit Component(Entity& owning_entity);
+    // explicit Component(Entity& owning_entity);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Component constructor. Custom sorting order.
@@ -58,7 +63,8 @@ public:
     /// @param [in] owning_entity   - The Entity that owns this Component instance. 
     /// @param [in] component_order - The sorting order mapping this Component will follow.
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    Component(Entity& owning_entity, Order const& component_order);
+    // Component(Entity& owning_entity, Order const& component_order);
+    explicit Component(Entity& owner, Configuration const& config = {});
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Component destructor.

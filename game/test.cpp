@@ -24,7 +24,7 @@ private:
 class TestComponent : public Core::Component
 {
 public:
-    TestComponent(Core::Entity& owner) : Core::Component(owner)
+    TestComponent(Core::Entity& owner, Core::Component::Configuration const& config) : Core::Component(owner, config)
     {
     }
 
@@ -98,22 +98,17 @@ public:
 class TestEntity : public Core::Entity
 {
 public:
-    TestEntity(Core::Layer& owner) : Core::Entity(owner)
+    TestEntity(Core::Entity::Owner owner, Core::Entity::Configuration const& config) : Core::Entity(owner, config)
     {
-        glm::vec2 position{ 100, 100 };
-        glm::vec2 scale{ 100, 100 };
-        add_component<Core::TransformComponent>("", position, scale);
-
-        Core::Component::Order order{};
-        SDL_Color color{ 100, 100, 100, 255 };
-       add_component<Core::RectRenderComponent>("", order, color);
+        add_component<Core::TransformComponent>("", {.position{ 100, 100 }, .scale{ 100, 100 }});
+        add_component<Core::RectRenderComponent>("", {.color{ 100, 100, 100, 255 }});
 
         SDL_Color text_color{ 255, 0, 0, 255 };
         std::string text = "Hello world, this is some text :)";
-        add_component<Core::TextRenderComponent>("", order, Core::Font::TINY_REGULAR, 25, text, text_color);
+        add_component<Core::TextRenderComponent>("", {.font_path{ Core::Font::TINY_REGULAR }, .point_size{ 25 } , .text{ text }, .color{ text_color }});
 
         SDL_Color subtitle_color{ 255, 255, 0, 255 };
-        add_component<Core::TextRenderComponent>("subtitle", order, Core::Font::TINY_REGULAR, 25, "[ subtitle — 2nd component ]", subtitle_color);
+        add_component<Core::TextRenderComponent>("subtitle", {.font_path{ Core::Font::TINY_REGULAR }, .point_size{ 25 }, .text{ "Some text" }, .color{ subtitle_color }});
     }
 
     virtual ~TestEntity()
@@ -203,13 +198,13 @@ public:
     {
         add_component<TestComponent>("");
 
-        add_child_entity<Core::LabelEntity>(
-            glm::vec2{0.f, -30.f},
-            Core::Font::TINY_REGULAR,
-            20,
-            "I am a child LabelEntity",
-            SDL_Color{255, 255, 255, 255}
-        );
+        add_child_entity<Core::UI::Label>({
+            .position = {0.f, -30.f},
+            .font_path = Core::Font::TINY_REGULAR,
+            .point_size = 20,
+            .text = "I am a child LabelEntity",
+            .color = {255, 255, 255, 255}
+        });
         // std::println("Test entity initialized");
     }
 
@@ -241,8 +236,8 @@ public:
             if (auto transform = get_component<Core::TransformComponent>().lock())
             {
                 transform->set_velocity(vel);
-                transform->update_local_position(transform->get_velocity());
-            }             
+                transform->update_position(transform->get_velocity());
+            }
         }
     }
 

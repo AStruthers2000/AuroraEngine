@@ -52,19 +52,38 @@ public:
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Entity constructor.
-    ///
-    /// @param [in] owning_layer - Entity must know what Layer owns it. 
+    /// @brief Wraps either a Layer or a parent Entity as the owner of a new Entity. Both convert
+    ///        implicitly, so derived entity constructors need only a single overload.
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    Entity(Layer& owning_layer, std::uint8_t update_order = DEFAULT_SORTING_ORDER);
+    struct Owner
+    {
+        Owner(Layer& layer) noexcept : m_layer(&layer), m_parent(nullptr) {}
+        Owner(Entity& entity) noexcept : m_layer(&entity.get_owning_layer()), m_parent(&entity) {}
+
+        Layer&  layer()  const { return *m_layer; }
+        Entity* parent() const { return m_parent; }
+
+    private:
+        Layer*  m_layer;
+        Entity* m_parent;
+    };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Child entity constructor. Used when this entity is owned by another Entity rather
-    ///        than a Layer. The owning Layer reference is obtained from the parent entity.
-    ///
-    /// @param [in] owning_parent - The parent Entity that owns this child.
+    /// @brief User-customizable construction parameters for Entity and derived classes.
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    Entity(Entity& owning_parent, std::uint8_t update_order = DEFAULT_SORTING_ORDER);
+    struct Configuration
+    {
+        std::uint8_t update_order = DEFAULT_SORTING_ORDER;
+    };
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Entity constructor. Accepts either a Layer or a parent Entity as owner via the
+    ///        implicit-converting Owner wrapper.
+    ///
+    /// @param [in] owner  - The Layer or parent Entity that will own this Entity.
+    /// @param [in] config - Optional construction parameters.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    Entity(Owner owner, Configuration const& config = {});
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Entity destructor.
@@ -254,8 +273,6 @@ public:
     ///
     /// @tparam TComponent Templated Component type to construct and attach. Requires that this type
     ///                    is derived from Component.
-    /// @tparam ...Args    Types of arguments to forward to the TComponent constructor;
-    ///                    automatically deduced.
     ///
     /// @param [in] args - Arguments forwarded to the TComponent constructor.
     ///
@@ -263,9 +280,9 @@ public:
     ///         long-term storage), or an empty std:::weak_ptr<TComponent> if a Component of that
     ///         type already exists (pending or active) on this Entity.
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    template <typename TComponent, typename... Args>
+    template <typename TComponent>
     requires(std::derived_from<TComponent, Component>)
-    std::weak_ptr<TComponent> add_component(std::string_view tag, Args&&... args)
+    std::weak_ptr<TComponent> add_component(std::string_view tag, typename TComponent::Configuration config = {})
     {
         std::weak_ptr<TComponent> rtn{};
         bool const already_exists = [&]() -> bool
@@ -283,7 +300,7 @@ public:
         else
         {
             on_component_added();
-            auto component_ptr = std::make_shared<TComponent>(*this, std::forward<Args>(args)...);
+            auto component_ptr = std::make_shared<TComponent>(*this, config);
             m_pending_components.push_back(PendingComponent{ component_ptr, std::string(tag) });
             rtn = component_ptr;
         }
@@ -393,21 +410,21 @@ public:
     bool has_parent() const { return m_parent != nullptr; }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Adds a child Entity to this Entity. Constructs a TEntity, passing *this as the
-    ///        first constructor argument, followed by any additional args.
+    /// @brief Adds a child Entity to this Entity. Constructs a TEntity with this Entity as the
+    ///        owner. The Entity::Owner implicit conversion handles parent assignment.
     ///
     /// @tparam TEntity Templated Entity type to construct. Requires it is derived from Entity.
-    /// @tparam ...Args Types of additional arguments forwarded to the TEntity constructor.
+    ///
+    /// @param [in] config - Optional construction parameters forwarded to the TEntity constructor.
     ///
     /// @return A std::weak_ptr<TEntity> to the newly created child Entity.
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    template <typename TEntity, typename... Args>
+    template <typename TEntity>
     requires(std::derived_from<TEntity, Entity>)
-    std::weak_ptr<TEntity> add_child_entity(Args&&... args)
+    std::weak_ptr<TEntity> add_child_entity(typename TEntity::Configuration config = {})
     {
         on_component_added();
-        auto child = std::make_shared<TEntity>(*this, std::forward<Args>(args)...);
-        child->m_parent = this;
+        auto child = std::make_shared<TEntity>(*this, config);
         m_pending_children.push_back(child);
         return child;
     }

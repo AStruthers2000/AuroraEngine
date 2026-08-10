@@ -106,11 +106,6 @@ public:
 
         SDL_Color text_color{ 255, 0, 0, 255 };
         std::string text = "Hello world, this is some text :)";
-        // add_component<Core::TextRenderComponent>("", {.font_path{ Core::Font::TINY_REGULAR }, .point_size{ 25 } , .text{ text }, .color{ text_color }});
-
-        SDL_Color subtitle_color{ 255, 255, 0, 255 };
-        // add_component<Core::TextRenderComponent>("subtitle", {.font_path{ Core::Font::TINY_REGULAR }, .point_size{ 25 }, .text{ "Some text" }, .color{ subtitle_color }});
-
         add_child_entity<Core::UI::Label>({
             .self_anchor = Core::UI::Anchor::CenterLeft,
             .parent_anchor = Core::UI::Anchor::CenterLeft,
@@ -121,6 +116,7 @@ public:
             .color = text_color,
         }, "health_label");
 
+        SDL_Color subtitle_color{ 255, 255, 0, 255 };
         add_child_entity<Core::UI::Label>({
             .offset = {0.f, 0.f},
             .font_path = Core::Font::TINY_REGULAR,
@@ -376,7 +372,7 @@ int main()
     {
         .title = "Hello world",
     };
-    spec.logical_size *= 4;
+    spec.logical_size *= 2;
 
     Core::Engine engine(spec);
     engine.set_fixed_timestep(1.f/144.f);

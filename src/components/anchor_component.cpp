@@ -6,7 +6,7 @@
 #include "core/entity.h"
 #include "core/components/transform_component.h"
 
-namespace Core
+namespace Core::UI
 {
 
 //--------------------------------------------------------------------------------------------------
@@ -28,8 +28,8 @@ glm::vec2 anchor_to_normalized(Anchor anchor)
 }
 
 //--------------------------------------------------------------------------------------------------
-AnchorComponent::AnchorComponent(Entity& owner, Configuration const& config)
-    : Component(owner, config)
+AnchorComponent::AnchorComponent(Core::Entity& owner, Configuration const& config)
+    : Core::Component(owner, config)
     , m_self_anchor(config.self_anchor)
     , m_parent_anchor(config.parent_anchor)
     , m_offset(config.offset)
@@ -39,11 +39,11 @@ AnchorComponent::AnchorComponent(Entity& owner, Configuration const& config)
 //--------------------------------------------------------------------------------------------------
 void AnchorComponent::on_awake()
 {
-    m_transform = get_sibling_component<TransformComponent>();
+    m_transform = get_sibling_component<Core::TransformComponent>();
 
-    if (Entity* parent = get_owner().get_parent())
+    if (Core::Entity* parent = get_owner().get_parent())
     {
-        m_parent_transform = parent->get_component<TransformComponent>("");
+        m_parent_transform = parent->get_component<Core::TransformComponent>("");
     }
 
     recompute_position();
@@ -94,4 +94,4 @@ void AnchorComponent::recompute_position()
     transform->set_position(parent_point + m_offset - self_pivot);
 }
 
-} // namespace Core
+} // namespace Core::UI

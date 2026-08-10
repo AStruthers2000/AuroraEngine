@@ -112,8 +112,8 @@ public:
         // add_component<Core::TextRenderComponent>("subtitle", {.font_path{ Core::Font::TINY_REGULAR }, .point_size{ 25 }, .text{ "Some text" }, .color{ subtitle_color }});
 
         add_child_entity<Core::UI::Label>({
-            .self_anchor = Core::Anchor::CenterLeft,
-            .parent_anchor = Core::Anchor::CenterLeft,
+            .self_anchor = Core::UI::Anchor::CenterLeft,
+            .parent_anchor = Core::UI::Anchor::CenterLeft,
             .offset = {5.f, 0.f},
             .font_path = Core::Font::TINY_REGULAR,
             .point_size = 25,
@@ -274,7 +274,7 @@ private:
     glm::vec2 move_dir{ 0.f, 0.f };
 };
 
-// Showcases Core::AnchorComponent: a background box with several Labels pinned to its corners
+// Showcases Core::UI::AnchorComponent: a background box with several Labels pinned to its corners
 // and center. Each Label's own bounding-box pivot (self_anchor) is matched to the same point on
 // the box's bounding box (parent_anchor), so the label stays flush against that point regardless
 // of the box's size; `offset` then nudges it inward as padding.
@@ -289,15 +289,15 @@ public:
 
     virtual void on_awake() override
     {
-        add_anchored_label(Core::Anchor::TopLeft,     "Top Left",     {  8.f,  8.f });
-        add_anchored_label(Core::Anchor::TopRight,    "Top Right",    { -8.f,  8.f });
-        add_anchored_label(Core::Anchor::Center,      "Center",       {  0.f,  0.f });
-        add_anchored_label(Core::Anchor::BottomLeft,  "Bottom Left",  {  8.f, -8.f });
-        add_anchored_label(Core::Anchor::BottomRight, "Bottom Right", { -8.f, -8.f });
+        add_anchored_label(Core::UI::Anchor::TopLeft,     "Top Left",     {  8.f,  8.f });
+        add_anchored_label(Core::UI::Anchor::TopRight,    "Top Right",    { -8.f,  8.f });
+        add_anchored_label(Core::UI::Anchor::Center,      "Center",       {  0.f,  0.f });
+        add_anchored_label(Core::UI::Anchor::BottomLeft,  "Bottom Left",  {  8.f, -8.f });
+        add_anchored_label(Core::UI::Anchor::BottomRight, "Bottom Right", { -8.f, -8.f });
     }
 
 private:
-    void add_anchored_label(Core::Anchor anchor, std::string_view text, glm::vec2 offset)
+    void add_anchored_label(Core::UI::Anchor anchor, std::string_view text, glm::vec2 offset)
     {
         add_child_entity<Core::UI::Label>({
             .self_anchor = anchor,

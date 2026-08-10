@@ -13,8 +13,11 @@
 
 namespace Core
 {
-
 class TransformComponent;
+}
+
+namespace Core::UI
+{
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief The nine standard anchor points on a rectangular bounding box.
@@ -57,7 +60,7 @@ glm::vec2 anchor_to_normalized(Anchor anchor);
 ///        TransformComponent::size can be anchored, e.g. an accessory Entity anchored to a corner
 ///        of a character's bounding box.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-class AnchorComponent : public Component
+class AnchorComponent : public Core::Component
 {
 public:
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -94,7 +97,7 @@ public:
     /// @param [in] owner  - The Entity that owns this Component.
     /// @param [in] config - Optional construction parameters (self anchor, parent anchor, offset).
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    explicit AnchorComponent(Entity& owner, Configuration const& config = {});
+    explicit AnchorComponent(Core::Entity& owner, Configuration const& config = {});
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Destructor. Default - no resources to release.
@@ -167,12 +170,12 @@ private:
     glm::vec2 m_offset;
 
     /// @brief Cached sibling TransformComponent.
-    std::weak_ptr<TransformComponent> m_transform{};
+    std::weak_ptr<Core::TransformComponent> m_transform{};
 
     /// @brief Cached parent Entity's TransformComponent. Empty if the owning Entity has no parent.
-    std::weak_ptr<TransformComponent> m_parent_transform{};
+    std::weak_ptr<Core::TransformComponent> m_parent_transform{};
 };
 
-} // namespace Core
+} // namespace Core::UI
 
 #endif // CORE_COMPONENTS_ANCHOR_COMPONENT_H

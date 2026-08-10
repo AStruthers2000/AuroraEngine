@@ -8,6 +8,7 @@
 #define CORE_ENTITIES_UI_LABEL_H
 
 #include "core/entity.h"
+#include "core/components/anchor_component.h"
 #include "core/components/text_render_component.h"
 
 #include <glm/glm.hpp>
@@ -21,9 +22,14 @@ namespace Core::UI
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief A self-contained Entity that renders a single line of text.
 ///
-/// Label encapsulates a TransformComponent and a TextRenderComponent into a ready-to-use Entity.
-/// Construct it via Layer::add_entity<Label>() and pass a Configuration to set the position,
-/// font, and initial text.
+/// Label encapsulates a TransformComponent, an AnchorComponent, and a TextRenderComponent into a
+/// ready-to-use Entity. Construct it via Layer::add_entity<Label>() and pass a Configuration to
+/// set the anchoring, font, and initial text.
+///
+/// @note  Label always owns an AnchorComponent. With the default @c self_anchor / @c
+///        parent_anchor of Anchor::TopLeft, the anchor math collapses to just @c offset, so a
+///        plain top-left-relative position (the pre-anchoring behavior) is just
+///        `.offset = { x, y }` with the other anchor fields left at their defaults.
 ///
 /// @note  Configuration inherits @c update_order from Entity::Configuration.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -40,8 +46,13 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////
     struct Configuration : Entity::Configuration
     {
-        /// @brief Initial world-space position in pixels.
-        glm::vec2 position{ 0.f, 0.f };
+        /// @brief Pivot point on the Label's own bounding box. See AnchorComponent.
+        Anchor self_anchor{ Anchor::TopLeft };
+        /// @brief Reference point on the parent Entity's bounding box. See AnchorComponent.
+        Anchor parent_anchor{ Anchor::TopLeft };
+        /// @brief Fine-tuning offset in pixels, applied after both anchors are resolved. With
+        ///        default TopLeft anchors, this is equivalent to a plain world-space position.
+        glm::vec2 offset{ 0.f, 0.f };
         /// @brief Path to the font file (relative to data root).
         std::string_view font_path{};
         /// @brief Font size in points.
@@ -71,8 +82,9 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Adds a TransformComponent and a TextRenderComponent, wiring them up with the
-    ///        construction-time parameters. Called once during the Entity's awake phase.
+    /// @brief Adds a TextRenderComponent, wiring it up with the construction-time parameters.
+    ///        Called once during the Entity's awake phase. The TransformComponent and
+    ///        AnchorComponent are added earlier, during construction.
     ////////////////////////////////////////////////////////////////////////////////////////////////
     void on_awake() override;
 

@@ -112,15 +112,17 @@ public:
         // add_component<Core::TextRenderComponent>("subtitle", {.font_path{ Core::Font::TINY_REGULAR }, .point_size{ 25 }, .text{ "Some text" }, .color{ subtitle_color }});
 
         add_child_entity<Core::UI::Label>({
-            .position = {0.f, 0.f},
+            .self_anchor = Core::Anchor::CenterLeft,
+            .parent_anchor = Core::Anchor::CenterLeft,
+            .offset = {5.f, 0.f},
             .font_path = Core::Font::TINY_REGULAR,
             .point_size = 25,
             .text = text,
-            .color = text_color
+            .color = text_color,
         }, "health_label");
 
         add_child_entity<Core::UI::Label>({
-            .position = {0.f, 0.f},
+            .offset = {0.f, 0.f},
             .font_path = Core::Font::TINY_REGULAR,
             .point_size = 25,
             .text = "Some text",
@@ -216,7 +218,7 @@ public:
         add_component<TestComponent>("");
 
         add_child_entity<Core::UI::Label>({
-            .position = {0.f, -30.f},
+            .offset = {0.f, -30.f},
             .font_path = Core::Font::TINY_REGULAR,
             .point_size = 20,
             .text = "I am a child LabelEntity",
@@ -297,21 +299,15 @@ public:
 private:
     void add_anchored_label(Core::Anchor anchor, std::string_view text, glm::vec2 offset)
     {
-        auto label = add_child_entity<Core::UI::Label>({
+        add_child_entity<Core::UI::Label>({
+            .self_anchor = anchor,
+            .parent_anchor = anchor,
+            .offset = offset,
             .font_path = Core::Font::TINY_REGULAR,
             .point_size = 14,
             .text = text,
             .color = { 255, 255, 255, 255 },
         });
-
-        if (auto label_ptr = label.lock())
-        {
-            label_ptr->add_component<Core::AnchorComponent>("", {
-                .self_anchor = anchor,
-                .parent_anchor = anchor,
-                .offset = offset,
-            });
-        }
     }
 };
 

@@ -16,7 +16,12 @@ Label::Label(Entity::Owner owner, Configuration const& config)
     , m_initial_text(config.text)
     , m_initial_color(config.color)
 {
-    add_component<TransformComponent>("", { .position = config.position });
+    add_component<TransformComponent>("");
+    add_component<AnchorComponent>("", {
+        .self_anchor = config.self_anchor,
+        .parent_anchor = config.parent_anchor,
+        .offset = config.offset,
+    });
 }
 
 //--------------------------------------------------------------------------------------------------

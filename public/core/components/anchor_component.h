@@ -1,0 +1,178 @@
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Copyright (C) 2026 AStruthers2000 - All Rights Reserved
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// @brief Positions a sibling TransformComponent relative to a point on the parent Entity's
+///        bounding box, offset by a pivot point on its own bounding box.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+#ifndef CORE_COMPONENTS_ANCHOR_COMPONENT_H
+#define CORE_COMPONENTS_ANCHOR_COMPONENT_H
+
+#include "core/component.h"
+
+#include <glm/glm.hpp>
+
+namespace Core
+{
+
+class TransformComponent;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// @brief The nine standard anchor points on a rectangular bounding box.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+enum class Anchor
+{
+    TopLeft,
+    TopCenter,
+    TopRight,
+    CenterLeft,
+    Center,
+    CenterRight,
+    BottomLeft,
+    BottomCenter,
+    BottomRight,
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// @return The normalized (0,0)-(1,1) multiplier corresponding to @p anchor, where (0,0) is the
+///         top-left corner of a bounding box and (1,1) is the bottom-right corner.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+glm::vec2 anchor_to_normalized(Anchor anchor);
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/// @brief Repositions a sibling TransformComponent so that a chosen pivot point on its own
+///        bounding box lines up with a chosen anchor point on the parent Entity's bounding box.
+///
+/// AnchorComponent recomputes the sibling TransformComponent's local position every frame from
+/// three inputs: @c parent_anchor (a point on the parent's bounding box), @c self_anchor (a pivot
+/// point on this Entity's own bounding box), and a fine-tuning @c offset. With both anchors left
+/// at the default Anchor::TopLeft and a zero offset, the resulting position is identical to
+/// today's implicit behavior (top-left-relative to the parent's origin), so adding this Component
+/// to an existing Entity is always backward compatible.
+///
+/// @note  Requires a sibling TransformComponent. If the owning Entity has no parent, the parent
+///        bounding box is treated as a zero-size box at the origin (i.e. @c parent_anchor has no
+///        effect and only @c self_anchor / @c offset matter).
+///
+/// @note  Not restricted to UI - anything with a sibling TransformComponent and a meaningful
+///        TransformComponent::size can be anchored, e.g. an accessory Entity anchored to a corner
+///        of a character's bounding box.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+class AnchorComponent : public Component
+{
+public:
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // Types
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Construction parameters for AnchorComponent.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    struct Configuration : public Component::Configuration
+    {
+        /// @brief Pivot point on this Entity's own bounding box.
+        Anchor self_anchor{ Anchor::TopLeft };
+        /// @brief Reference point on the parent Entity's bounding box.
+        Anchor parent_anchor{ Anchor::TopLeft };
+        /// @brief Fine-tuning offset in pixels, applied after both anchors are resolved.
+        glm::vec2 offset{ 0.f, 0.f };
+    };
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Enforce at most one AnchorComponent per Entity - multiple anchors driving the same
+    ///        TransformComponent would be ambiguous.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    static constexpr bool unique_per_entity = true;
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // Construction & Destruction
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Constructs an AnchorComponent.
+    ///
+    /// @param [in] owner  - The Entity that owns this Component.
+    /// @param [in] config - Optional construction parameters (self anchor, parent anchor, offset).
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    explicit AnchorComponent(Entity& owner, Configuration const& config = {});
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Destructor. Default - no resources to release.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    ~AnchorComponent() override = default;
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // Virtual Lifecycle Hook Overrides
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Caches weak_ptrs to the sibling TransformComponent and, if the owning Entity has a
+    ///        parent, the parent's TransformComponent. Called once during the Entity's awake
+    ///        phase.
+    ///
+    /// @note  Asserts that a sibling TransformComponent exists.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void on_awake() override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Recomputes and applies the sibling TransformComponent's local position from the
+    ///        current anchors, offset, and bounding box sizes. Runs after the owning Entity's
+    ///        on_update()/on_late_update() and after all sibling Components' on_update(), so the
+    ///        parent Entity (updated earlier in the same frame) has already resolved its own
+    ///        anchored position.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void on_late_update(float delta_time) override;
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // Runtime API
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Changes the pivot point on this Entity's own bounding box.
+    ///
+    /// @param [in] anchor - New self anchor.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void set_self_anchor(Anchor anchor);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Changes the reference point on the parent Entity's bounding box.
+    ///
+    /// @param [in] anchor - New parent anchor.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void set_parent_anchor(Anchor anchor);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Changes the fine-tuning offset applied after both anchors are resolved.
+    ///
+    /// @param [in] offset - New offset in pixels.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void set_offset(glm::vec2 offset);
+
+private:
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Computes the anchored local position and applies it to the sibling
+    ///        TransformComponent. No-ops if the sibling TransformComponent is gone.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void recompute_position();
+
+    /// @brief Pivot point on this Entity's own bounding box.
+    Anchor m_self_anchor;
+
+    /// @brief Reference point on the parent Entity's bounding box.
+    Anchor m_parent_anchor;
+
+    /// @brief Fine-tuning offset in pixels.
+    glm::vec2 m_offset;
+
+    /// @brief Cached sibling TransformComponent.
+    std::weak_ptr<TransformComponent> m_transform{};
+
+    /// @brief Cached parent Entity's TransformComponent. Empty if the owning Entity has no parent.
+    std::weak_ptr<TransformComponent> m_parent_transform{};
+};
+
+} // namespace Core
+
+#endif // CORE_COMPONENTS_ANCHOR_COMPONENT_H

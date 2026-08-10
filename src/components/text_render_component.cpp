@@ -25,6 +25,7 @@ void TextRenderComponent::on_awake()
 {
     m_owning_transform = get_sibling_component<TransformComponent>();
     m_font = AssetManager::instance().get_font(m_font_path, m_point_size);
+    measure_and_apply_size();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -74,6 +75,7 @@ void TextRenderComponent::set_text(std::string_view text)
     {
         m_text = text;
         m_cache_valid = false;
+        measure_and_apply_size();
     }
 }
 
@@ -123,6 +125,27 @@ void TextRenderComponent::rebuild_texture(SDL_Renderer* renderer)
             m_cached_texture_height = glm::round(h * Core::AssetManager::INVERSE_FONT_UPSCALING_FACTOR);
             m_cache_valid = true;
         }
+    }
+}
+
+//--------------------------------------------------------------------------------------------------
+void TextRenderComponent::measure_and_apply_size()
+{
+    auto font_ptr = m_font.lock();
+    auto transform = m_owning_transform.lock();
+    if (!font_ptr || !transform)
+    {
+        return;
+    }
+
+    int w{ 0 };
+    int h{ 0 };
+    if (TTF_GetStringSize(font_ptr.get(), m_text.c_str(), 0, &w, &h))
+    {
+        transform->set_size({
+            glm::round(static_cast<float>(w) * Core::AssetManager::INVERSE_FONT_UPSCALING_FACTOR),
+            glm::round(static_cast<float>(h) * Core::AssetManager::INVERSE_FONT_UPSCALING_FACTOR),
+        });
     }
 }
 

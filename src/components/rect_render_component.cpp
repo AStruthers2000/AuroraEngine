@@ -26,11 +26,12 @@ void RectRenderComponent::on_render(SDL_Renderer* renderer)
 {
     if (auto transform = m_owning_transform.lock())
     {
+        glm::vec2 const drawn_size = transform->get_size() * transform->get_world_scale();
         SDL_FRect dst{
             .x = transform->get_world_position().x,
             .y = transform->get_world_position().y,
-            .w = transform->get_world_scale().x,
-            .h = transform->get_world_scale().y,
+            .w = drawn_size.x,
+            .h = drawn_size.y,
         };
 
         SDL_SetRenderDrawColor(renderer, m_color.r, m_color.g, m_color.b, m_color.a);

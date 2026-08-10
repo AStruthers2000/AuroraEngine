@@ -1,5 +1,6 @@
 #include "aurora_engine_public.h"
 
+#include "core/components/anchor_component.h"
 #include "core/components/rect_render_component.h"
 #include "core/components/text_render_component.h"
 
@@ -100,15 +101,31 @@ class TestEntity : public Core::Entity
 public:
     TestEntity(Core::Entity::Owner owner, Core::Entity::Configuration const& config) : Core::Entity(owner, config)
     {
-        add_component<Core::TransformComponent>("", {.position{ 100, 100 }, .scale{ 100, 100 }});
+        add_component<Core::TransformComponent>("", {.position{ 100, 100 }, .scale{ 1, 1 }, .size{ 100, 100 }});
         add_component<Core::RectRenderComponent>("", {.color{ 100, 100, 100, 255 }});
 
         SDL_Color text_color{ 255, 0, 0, 255 };
         std::string text = "Hello world, this is some text :)";
-        add_component<Core::TextRenderComponent>("", {.font_path{ Core::Font::TINY_REGULAR }, .point_size{ 25 } , .text{ text }, .color{ text_color }});
+        // add_component<Core::TextRenderComponent>("", {.font_path{ Core::Font::TINY_REGULAR }, .point_size{ 25 } , .text{ text }, .color{ text_color }});
 
         SDL_Color subtitle_color{ 255, 255, 0, 255 };
-        add_component<Core::TextRenderComponent>("subtitle", {.font_path{ Core::Font::TINY_REGULAR }, .point_size{ 25 }, .text{ "Some text" }, .color{ subtitle_color }});
+        // add_component<Core::TextRenderComponent>("subtitle", {.font_path{ Core::Font::TINY_REGULAR }, .point_size{ 25 }, .text{ "Some text" }, .color{ subtitle_color }});
+
+        add_child_entity<Core::UI::Label>({
+            .position = {0.f, 0.f},
+            .font_path = Core::Font::TINY_REGULAR,
+            .point_size = 25,
+            .text = text,
+            .color = text_color
+        });
+
+        add_child_entity<Core::UI::Label>({
+            .position = {0.f, 0.f},
+            .font_path = Core::Font::TINY_REGULAR,
+            .point_size = 25,
+            .text = "Some text",
+            .color = subtitle_color
+        });
     }
 
     virtual ~TestEntity()
@@ -255,6 +272,49 @@ private:
     glm::vec2 move_dir{ 0.f, 0.f };
 };
 
+// Showcases Core::AnchorComponent: a background box with several Labels pinned to its corners
+// and center. Each Label's own bounding-box pivot (self_anchor) is matched to the same point on
+// the box's bounding box (parent_anchor), so the label stays flush against that point regardless
+// of the box's size; `offset` then nudges it inward as padding.
+class AnchorDemoBox : public Core::Entity
+{
+public:
+    AnchorDemoBox(Core::Entity::Owner owner, Core::Entity::Configuration const& config) : Core::Entity(owner, config)
+    {
+        add_component<Core::TransformComponent>("", { .position{ 400.f, 300.f }, .size{ 300.f, 200.f } });
+        add_component<Core::RectRenderComponent>("", { .color{ 40, 40, 60, 255 } });
+    }
+
+    virtual void on_awake() override
+    {
+        add_anchored_label(Core::Anchor::TopLeft,     "Top Left",     {  8.f,  8.f });
+        add_anchored_label(Core::Anchor::TopRight,    "Top Right",    { -8.f,  8.f });
+        add_anchored_label(Core::Anchor::Center,      "Center",       {  0.f,  0.f });
+        add_anchored_label(Core::Anchor::BottomLeft,  "Bottom Left",  {  8.f, -8.f });
+        add_anchored_label(Core::Anchor::BottomRight, "Bottom Right", { -8.f, -8.f });
+    }
+
+private:
+    void add_anchored_label(Core::Anchor anchor, std::string_view text, glm::vec2 offset)
+    {
+        auto label = add_child_entity<Core::UI::Label>({
+            .font_path = Core::Font::TINY_REGULAR,
+            .point_size = 14,
+            .text = text,
+            .color = { 255, 255, 255, 255 },
+        });
+
+        if (auto label_ptr = label.lock())
+        {
+            label_ptr->add_component<Core::AnchorComponent>("", {
+                .self_anchor = anchor,
+                .parent_anchor = anchor,
+                .offset = offset,
+            });
+        }
+    }
+};
+
 class TestLayer : public Core::Layer
 {
 public:
@@ -285,6 +345,7 @@ public:
     {
         // std::println("Test layer initialized");
         add_entity<TestEntity>();
+        add_entity<AnchorDemoBox>();
     }
 
     virtual void on_update(float delta_time) override
@@ -319,6 +380,7 @@ int main()
     {
         .title = "Hello world",
     };
+    spec.logical_size *= 4;
 
     Core::Engine engine(spec);
     engine.set_fixed_timestep(1.f/144.f);

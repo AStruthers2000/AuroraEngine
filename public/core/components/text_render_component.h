@@ -140,6 +140,16 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////
     void rebuild_texture(SDL_Renderer* renderer);
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Measures @c m_text with @c m_font via TTF_GetStringSize() (no GPU texture involved)
+    ///        and pushes the result into the sibling TransformComponent's size. Called whenever
+    ///        the text content changes, so layout/anchoring code always sees an up-to-date size -
+    ///        independent of the lazily-rebuilt GPU texture in rebuild_texture().
+    ///
+    /// @note  No-ops if the font weak_ptr has expired or the sibling TransformComponent is gone.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void measure_and_apply_size();
+
     /// @brief Font file path stored for AssetManager lookup.
     std::string  m_font_path{};
 

@@ -25,6 +25,7 @@ add_library(AuroraEngine
 
     # Components
     # ${PROJECT_SOURCE_DIR}/src/components/collision_component.cpp
+    ${PROJECT_SOURCE_DIR}/src/components/anchor_component.cpp
     ${PROJECT_SOURCE_DIR}/src/components/render_component.cpp
     ${PROJECT_SOURCE_DIR}/src/components/transform_component.cpp
     ${PROJECT_SOURCE_DIR}/src/components/rect_render_component.cpp

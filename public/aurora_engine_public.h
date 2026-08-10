@@ -21,6 +21,7 @@
 #include "core/components/rect_render_component.h"
 #include "core/components/text_render_component.h"
 #include "core/components/transform_component.h"
+#include "core/components/anchor_component.h"
 
 #include "core/entities/label.h"
 

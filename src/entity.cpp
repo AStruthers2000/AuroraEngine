@@ -82,8 +82,8 @@ void Entity::awake_entity()
         // Awake any children added during construction or awake()
         for (auto const& child : m_pending_children)
         {
-            if (child->get_entity_state() == EState::Pending)
-                child->awake_entity();
+            if (child.entity->get_entity_state() == EState::Pending)
+                child.entity->awake_entity();
         }
     }
     else
@@ -142,13 +142,17 @@ void Entity::start_entity()
         // Start and move to active any children that were awoken above
         for (auto const& child : m_pending_children)
         {
-            if (child->get_entity_state() == EState::Awoken)
+            if (child.entity->get_entity_state() == EState::Awoken)
             {
-                child->start_entity();
-                std::uint8_t priority = child->get_update_order();
+                child.entity->start_entity();
+                std::uint8_t priority = child.entity->get_update_order();
                 auto it = std::find_if(m_children.begin(), m_children.end(),
                     [priority](auto const& c){ return c->get_update_order() > priority; });
-                m_children.insert(it, child);
+                m_children.insert(it, child.entity);
+                m_child_store.try_emplace(
+                    ComponentKey{ std::type_index(typeid(*child.entity.get())), child.tag },
+                    child.entity
+                );
             }
         }
         m_pending_children.clear();
@@ -377,18 +381,22 @@ void Entity::flush_pending_children()
     // Two-pass: awake all, then start all — same contract as Layer::initialize_entities
     for (auto const& child : m_pending_children)
     {
-        if (child->get_entity_state() == EState::Pending)
-            child->awake_entity();
+        if (child.entity->get_entity_state() == EState::Pending)
+            child.entity->awake_entity();
     }
     for (auto const& child : m_pending_children)
     {
-        if (child->get_entity_state() == EState::Awoken)
+        if (child.entity->get_entity_state() == EState::Awoken)
         {
-            child->start_entity();
-            std::uint8_t priority = child->get_update_order();
+            child.entity->start_entity();
+            std::uint8_t priority = child.entity->get_update_order();
             auto it = std::find_if(m_children.begin(), m_children.end(),
                 [priority](auto const& c){ return c->get_update_order() > priority; });
-            m_children.insert(it, child);
+            m_children.insert(it, child.entity);
+            m_child_store.try_emplace(
+                ComponentKey{ std::type_index(typeid(*child.entity.get())), child.tag },
+                child.entity
+            );
         }
     }
     m_pending_children.clear();
@@ -403,6 +411,7 @@ void Entity::update_children(float delta_time)
         if ((*it)->get_entity_state() == EState::Destroyed)
         {
             (*it)->cleanup_entity();
+            std::erase_if(m_child_store, [&](auto const& entry) { return entry.second == *it; });
             it = m_children.erase(it);
         }
         else { ++it; }
@@ -435,6 +444,7 @@ void Entity::cleanup_children()
         child->cleanup_entity();
     }
     m_children.clear();
+    m_child_store.clear();
     m_pending_children.clear();
 }
 

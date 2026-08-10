@@ -117,7 +117,7 @@ public:
             .point_size = 25,
             .text = text,
             .color = text_color
-        });
+        }, "health_label");
 
         add_child_entity<Core::UI::Label>({
             .position = {0.f, 0.f},
@@ -195,7 +195,7 @@ public:
         dispatcher.dispatch<PlayerTookDamageEvent>(
             [this](PlayerTookDamageEvent& event)
             {
-                if (auto text_ptr = get_component<Core::TextRenderComponent>().lock())
+                if (auto text_ptr = get_child_entity<Core::UI::Label>("health_label").lock())
                 {
                     text_ptr->set_text(event.to_string());
 

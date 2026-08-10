@@ -369,20 +369,55 @@ public:
     ///        and store as a @c shared_ptr - Entity owns the child and holds the @c shared_ptr
     ///        internally. Storing another @c shared_ptr will prevent correct destruction.
     ///
+    /// @note  Tagging: pass @p tag to distinguish multiple children of the same type so they can
+    ///        later be looked up with get_child_entity<T>(tag). Untagged children use "".
+    ///
     /// @tparam TEntity The derived Entity type to construct. Must be derived from Entity.
     ///
     /// @param [in] config - Optional construction parameters forwarded to the TEntity constructor.
+    /// @param [in] tag    - A string tag to distinguish multiple child Entities of the same type.
+    ///                      Pass @c "" for untagged (default) children.
     ///
     /// @return A @c std::weak_ptr<TEntity> to the newly created child Entity.
     ////////////////////////////////////////////////////////////////////////////////////////////////
     template <typename TEntity>
     requires(std::derived_from<TEntity, Entity>)
-    std::weak_ptr<TEntity> add_child_entity(typename TEntity::Configuration config = {})
+    std::weak_ptr<TEntity> add_child_entity(typename TEntity::Configuration config = {}, std::string_view tag = "")
     {
         on_component_added();
         auto child = std::make_shared<TEntity>(*this, config);
-        m_pending_children.push_back(child);
+        m_pending_children.push_back(PendingChild{ child, std::string(tag) });
         return child;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Retrieves the child Entity of type TChildEntity with the given tag.
+    ///
+    /// @note  Only finds children that have completed their awake/start pass (i.e. have been
+    ///        moved into the active child collection). A child added earlier in the same frame is
+    ///        not queryable yet - prefer caching the @c weak_ptr returned by add_child_entity()
+    ///        when you need to use it immediately.
+    ///
+    /// @note  Performance: O(1) hash-map lookup on fully-initialized children. Cache the result in
+    ///        a member @c weak_ptr rather than calling this every frame.
+    ///
+    /// @tparam TChildEntity The Entity type to search for. Must be derived from Entity.
+    ///
+    /// @param [in] tag - Tag of the child Entity to retrieve. Defaults to @c "" (untagged).
+    ///
+    /// @return A @c std::weak_ptr<TChildEntity> to the matching child, or an empty
+    ///         @c std::weak_ptr<TChildEntity> if no match is found.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    template <typename TChildEntity>
+    requires(std::derived_from<TChildEntity, Entity>)
+    std::weak_ptr<TChildEntity> get_child_entity(std::string_view tag = "") const
+    {
+        auto it = m_child_store.find(ComponentKey{ std::type_index(typeid(TChildEntity)), std::string(tag) });
+        if (it != m_child_store.end())
+        {
+            return std::static_pointer_cast<TChildEntity>(it->second);
+        }
+        return std::weak_ptr<TChildEntity>();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -682,6 +717,15 @@ private:
         std::string tag;
     };
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Holds a not-yet-awoken child Entity and its associated tag.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    struct PendingChild
+    {
+        std::shared_ptr<Entity> entity;
+        std::string tag;
+    };
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // Private Component Lifecycle Helpers
@@ -850,10 +894,15 @@ private:
     EState m_state{ EState::Pending };
 
     /// @brief Children awaiting initialization.
-    std::vector<std::shared_ptr<Entity>> m_pending_children{};
+    std::vector<PendingChild> m_pending_children{};
     
     /// @brief Active child Entities, sorted by update_order.
     std::vector<std::shared_ptr<Entity>> m_children{};
+
+    /// @brief Active child Entity store, keyed by (type, tag). Populated alongside m_children, so
+    ///        it only ever contains fully awoken-and-started children. Reuses ComponentKey /
+    ///        ComponentKeyHash since both are just generic (type_index, tag) lookups.
+    std::unordered_map<ComponentKey, std::shared_ptr<Entity>, ComponentKeyHash> m_child_store{};
 
     /// @brief Components awaiting awake_components().
     std::vector<PendingComponent> m_pending_components{};

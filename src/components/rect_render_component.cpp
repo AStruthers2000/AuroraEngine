@@ -39,4 +39,10 @@ void RectRenderComponent::on_render(SDL_Renderer* renderer)
     }
 }
 
+//--------------------------------------------------------------------------------------------------
+void RectRenderComponent::set_color(SDL_Color const& new_color)
+{
+    m_color = new_color;
+}
+
 } // namespace Core

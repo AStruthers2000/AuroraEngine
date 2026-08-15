@@ -7,7 +7,7 @@
 #ifndef CORE_ENTITIES_UI_LABEL_H
 #define CORE_ENTITIES_UI_LABEL_H
 
-#include "core/entity.h"
+#include "core/entities/ui/ui_element.h"
 #include "core/components/anchor_component.h"
 #include "core/components/text_render_component.h"
 
@@ -33,7 +33,7 @@ namespace Core::UI
 ///
 /// @note  Configuration inherits @c update_order from Entity::Configuration.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-class Label : public Entity
+class Label : public UIElement
 {
 public:
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -41,25 +41,17 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @brief Construction parameters for Label. Inherits @c update_order from
-    ///        Entity::Configuration.
+    /// @brief Construction parameters for Label.
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    struct Configuration : Entity::Configuration
+    struct Configuration : UIElement::Configuration
     {
-        /// @brief Pivot point on the Label's own bounding box. See AnchorComponent.
-        Anchor self_anchor{ Anchor::TopLeft };
-        /// @brief Reference point on the parent Entity's bounding box. See AnchorComponent.
-        Anchor parent_anchor{ Anchor::TopLeft };
-        /// @brief Fine-tuning offset in pixels, applied after both anchors are resolved. With
-        ///        default TopLeft anchors, this is equivalent to a plain world-space position.
-        glm::vec2 offset{ 0.f, 0.f };
         /// @brief Path to the font file (relative to data root).
         std::string_view font_path{};
         /// @brief Font size in points.
         int point_size{ 12 };
         /// @brief Initial text string to display.
         std::string_view text{};
-        /// @brief Initial text color (RGBA).
+        /// @brief Text color.
         SDL_Color color{ 255, 255, 255, 255 };
     };
 

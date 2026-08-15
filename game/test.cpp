@@ -106,24 +106,24 @@ public:
 
         SDL_Color text_color{ 255, 0, 0, 255 };
         std::string text = "Hello world, this is some text :)";
-        add_child_entity<Core::UI::Label>({
-            .self_anchor = Core::UI::Anchor::CenterLeft,
-            .parent_anchor = Core::UI::Anchor::CenterLeft,
-            .offset = {5.f, 0.f},
-            .font_path = Core::Font::TINY_REGULAR,
-            .point_size = 25,
-            .text = text,
-            .color = text_color,
-        }, "health_label");
+        Core::UI::Label::Configuration health_label_cfg;
+        health_label_cfg.self_anchor   = Core::UI::Anchor::CenterLeft;
+        health_label_cfg.parent_anchor = Core::UI::Anchor::CenterLeft;
+        health_label_cfg.offset        = {5.f, 0.f};
+        health_label_cfg.color         = text_color;
+        health_label_cfg.font_path     = Core::Font::TINY_REGULAR;
+        health_label_cfg.point_size    = 25;
+        health_label_cfg.text          = text;
+        add_child_entity<Core::UI::Label>(health_label_cfg, "health_label");
 
         SDL_Color subtitle_color{ 255, 255, 0, 255 };
-        add_child_entity<Core::UI::Label>({
-            .offset = {0.f, 0.f},
-            .font_path = Core::Font::TINY_REGULAR,
-            .point_size = 25,
-            .text = "Some text",
-            .color = subtitle_color
-        });
+        Core::UI::Label::Configuration subtitle_cfg;
+        subtitle_cfg.offset     = {0.f, 0.f};
+        subtitle_cfg.color      = subtitle_color;
+        subtitle_cfg.font_path  = Core::Font::TINY_REGULAR;
+        subtitle_cfg.point_size = 25;
+        subtitle_cfg.text       = "Some text";
+        add_child_entity<Core::UI::Label>(subtitle_cfg);
     }
 
     virtual ~TestEntity()
@@ -187,7 +187,7 @@ public:
             [this](Core::MouseButtonPressedEvent& event)
             {
                 std::println("Entity handling mouse button pressed event: {}", event.to_string());
-                return true;
+                return false;
             }
         );
         dispatcher.dispatch<PlayerTookDamageEvent>(
@@ -213,13 +213,13 @@ public:
     {
         add_component<TestComponent>("");
 
-        add_child_entity<Core::UI::Label>({
-            .offset = {0.f, -30.f},
-            .font_path = Core::Font::TINY_REGULAR,
-            .point_size = 20,
-            .text = "I am a child LabelEntity",
-            .color = {255, 255, 255, 255}
-        });
+        Core::UI::Label::Configuration child_label_cfg;
+        child_label_cfg.offset     = {0.f, -30.f};
+        child_label_cfg.color      = {255, 255, 255, 255};
+        child_label_cfg.font_path  = Core::Font::TINY_REGULAR;
+        child_label_cfg.point_size = 20;
+        child_label_cfg.text       = "I am a child LabelEntity";
+        add_child_entity<Core::UI::Label>(child_label_cfg);
         // std::println("Test entity initialized");
     }
 
@@ -270,43 +270,6 @@ private:
     glm::vec2 move_dir{ 0.f, 0.f };
 };
 
-// Showcases Core::UI::AnchorComponent: a background box with several Labels pinned to its corners
-// and center. Each Label's own bounding-box pivot (self_anchor) is matched to the same point on
-// the box's bounding box (parent_anchor), so the label stays flush against that point regardless
-// of the box's size; `offset` then nudges it inward as padding.
-class AnchorDemoBox : public Core::Entity
-{
-public:
-    AnchorDemoBox(Core::Entity::Owner owner, Core::Entity::Configuration const& config) : Core::Entity(owner, config)
-    {
-        add_component<Core::TransformComponent>("", { .position{ 400.f, 300.f }, .size{ 300.f, 200.f } });
-        add_component<Core::RectRenderComponent>("", { .color{ 40, 40, 60, 255 } });
-    }
-
-    virtual void on_awake() override
-    {
-        add_anchored_label(Core::UI::Anchor::TopLeft,     "Top Left",     {  8.f,  8.f });
-        add_anchored_label(Core::UI::Anchor::TopRight,    "Top Right",    { -8.f,  8.f });
-        add_anchored_label(Core::UI::Anchor::Center,      "Center",       {  0.f,  0.f });
-        add_anchored_label(Core::UI::Anchor::BottomLeft,  "Bottom Left",  {  8.f, -8.f });
-        add_anchored_label(Core::UI::Anchor::BottomRight, "Bottom Right", { -8.f, -8.f });
-    }
-
-private:
-    void add_anchored_label(Core::UI::Anchor anchor, std::string_view text, glm::vec2 offset)
-    {
-        add_child_entity<Core::UI::Label>({
-            .self_anchor = anchor,
-            .parent_anchor = anchor,
-            .offset = offset,
-            .font_path = Core::Font::TINY_REGULAR,
-            .point_size = 14,
-            .text = text,
-            .color = { 255, 255, 255, 255 },
-        });
-    }
-};
-
 class TestLayer : public Core::Layer
 {
 public:
@@ -331,13 +294,66 @@ public:
                 return true;
             }
         );
+        dispatcher.dispatch<Core::MouseButtonPressedEvent>(
+            [this](Core::MouseButtonPressedEvent& event)
+            {
+                if (event.get_mouse_button() == 3)
+                {
+                    if (auto panel = m_panel.lock())
+                    {
+                        static bool has_border{ true };
+                        panel->set_has_border(has_border);
+                        has_border = has_border ? false : true;
+
+                    }
+                }
+                return false;
+            }
+        );
     }
 
     virtual void on_initialize() override
     {
         // std::println("Test layer initialized");
         add_entity<TestEntity>();
-        add_entity<AnchorDemoBox>();
+
+        Core::UI::Panel::Configuration anchor_box_cfg;
+        anchor_box_cfg.offset = { 400.f, 300.f };
+        anchor_box_cfg.panel_size = { 300.f, 200.f };
+        anchor_box_cfg.panel_color = { 80, 40, 60, 128 };
+        anchor_box_cfg.has_border = { true };
+        anchor_box_cfg.border_size = { 2, 2 };
+        anchor_box_cfg.border_color = { 255, 255, 255, 255 };
+        auto anchor_box = add_entity<Core::UI::Panel>(anchor_box_cfg);
+        if (auto anchor_box_ptr = anchor_box.lock())
+        {
+            auto label_factory = [](Core::UI::Anchor anchor, std::string_view text, glm::vec2 offset)
+            {
+                Core::UI::Label::Configuration cfg;
+                cfg.self_anchor   = anchor;
+                cfg.parent_anchor = anchor;
+                cfg.offset        = offset;
+                cfg.font_path     = Core::Font::TINY_REGULAR;
+                cfg.point_size    = 14;
+                cfg.text          = text;
+                cfg.color         = { 255, 255, 255, 255 };
+        
+                return cfg;
+            };
+        
+            anchor_box_ptr->add_child_entity<Core::UI::Label>(label_factory(Core::UI::Anchor::TopLeft,     "Top Left",     { 8.f,   8.f }));
+            anchor_box_ptr->add_child_entity<Core::UI::Label>(label_factory(Core::UI::Anchor::TopRight,    "Top Right",    { -8.f,  8.f }));
+            anchor_box_ptr->add_child_entity<Core::UI::Label>(label_factory(Core::UI::Anchor::Center,      "Center",       { 0.f,   0.f }));
+            anchor_box_ptr->add_child_entity<Core::UI::Label>(label_factory(Core::UI::Anchor::BottomLeft,  "Bottom Left",  { 8.f,  -8.f }));
+            anchor_box_ptr->add_child_entity<Core::UI::Label>(label_factory(Core::UI::Anchor::BottomRight, "Bottom Right", { -8.f, -8.f }));
+        }
+
+        Core::UI::Panel::Configuration panel_cfg;
+        panel_cfg.offset       = {10, 10};
+        panel_cfg.panel_size   = {100, 100};
+        panel_cfg.border_size  = {2, 2};
+        panel_cfg.border_color = {255, 0, 0, 255};
+        m_panel = add_entity<Core::UI::Panel>(panel_cfg);
     }
 
     virtual void on_update(float delta_time) override
@@ -364,6 +380,9 @@ public:
     {
         // std::println("Test layer cleaning up");
     }
+
+private:
+    std::weak_ptr<Core::UI::Panel> m_panel{};
 };
 
 int main()

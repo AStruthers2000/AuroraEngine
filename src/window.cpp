@@ -44,6 +44,7 @@ void Window::create()
         std::exit(-1);
     }
 
+    SDL_SetRenderDrawBlendMode(m_sdl_renderer, SDL_BLENDMODE_BLEND);
     SDL_SetRenderLogicalPresentation(m_sdl_renderer,
                                      static_cast<int>(m_specification.logical_size.x),
                                      static_cast<int>(m_specification.logical_size.y),

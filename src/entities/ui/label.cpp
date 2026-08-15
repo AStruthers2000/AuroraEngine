@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Copyright (C) 2026 AStruthers2000 - All Rights Reserved
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-#include "core/entities/label.h"
+#include "core/entities/ui/label.h"
 
 #include "core/components/transform_component.h"
 
@@ -10,32 +10,17 @@ namespace Core::UI
 
 //--------------------------------------------------------------------------------------------------
 Label::Label(Entity::Owner owner, Configuration const& config)
-    : Entity(owner, config)
+    : UIElement(owner, config)
     , m_font_path(config.font_path)
     , m_point_size(config.point_size)
     , m_initial_text(config.text)
     , m_initial_color(config.color)
 {
-    add_component<TransformComponent>("");
-    add_component<AnchorComponent>("", {
-        .self_anchor = config.self_anchor,
-        .parent_anchor = config.parent_anchor,
-        .offset = config.offset,
-    });
 }
 
 //--------------------------------------------------------------------------------------------------
 void Label::on_awake()
 {
-    // Component::Order order{};
-    // m_text_component = add_component<TextRenderComponent>(
-    //     "label",
-    //     order,
-    //     m_font_path,
-    //     m_point_size,
-    //     m_initial_text,
-    //     m_initial_color
-    // );
     TextRenderComponent::Configuration config
     {
         .font_path = m_font_path,

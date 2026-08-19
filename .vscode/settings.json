@@ -3,6 +3,7 @@
     "cmake.useCMakePresets": "always",
     "cSpell.words": [
         "rasterizes",
-        "renderable"
+        "renderable",
+        "unhovered"
     ],
 }

@@ -23,6 +23,7 @@
 #include "core/components/transform_component.h"
 #include "core/components/anchor_component.h"
 
+#include "core/entities/ui/button.h"
 #include "core/entities/ui/label.h"
 #include "core/entities/ui/panel.h"
 

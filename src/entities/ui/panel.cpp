@@ -17,7 +17,6 @@ Panel::Panel(Entity::Owner owner, Configuration const& config)
     , m_border_size(config.border_size)
     , m_border_color(config.border_color)
 {
-    std::println("{}, {}", config.panel_size.x, config.panel_size.y);
     TransformComponent::Configuration transform_config
     {
         .position = config.offset,
@@ -80,6 +79,12 @@ void Panel::on_render(SDL_Renderer* renderer)
 }
 
 //--------------------------------------------------------------------------------------------------
+SDL_Color Panel::get_panel_color() const
+{
+    return m_panel_color;
+}
+
+//--------------------------------------------------------------------------------------------------
 void Panel::set_panel_color(SDL_Color const& new_color)
 {
     if (auto panel = m_panel.lock())
@@ -101,10 +106,15 @@ void Panel::set_border_size(glm::vec2 const& new_border_size)
 }
 
 //--------------------------------------------------------------------------------------------------
+SDL_Color Panel::get_border_color() const
+{
+    return m_border_color;
+}
+
+//--------------------------------------------------------------------------------------------------
 void Panel::set_border_color(SDL_Color const& new_color)
 {
     m_border_color = new_color;
 }
 
-
-} // namespace Core
+} // namespace Core::UI

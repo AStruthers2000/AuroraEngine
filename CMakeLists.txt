@@ -32,6 +32,7 @@ add_library(AuroraEngine
     ${PROJECT_SOURCE_DIR}/src/components/text_render_component.cpp
 
     # Entities
+    ${PROJECT_SOURCE_DIR}/src/entities/ui/button.cpp
     ${PROJECT_SOURCE_DIR}/src/entities/ui/label.cpp
     ${PROJECT_SOURCE_DIR}/src/entities/ui/panel.cpp
     ${PROJECT_SOURCE_DIR}/src/entities/ui/ui_element.cpp

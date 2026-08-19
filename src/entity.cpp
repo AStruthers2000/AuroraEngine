@@ -29,6 +29,8 @@ void Entity::broadcast_event(Event& event)
 //--------------------------------------------------------------------------------------------------
 void Entity::propagate_event_down(Event& event)
 {
+    if (m_state == EState::Disabled) return;
+
     // Broadcast Event to all owned Components
     for (auto& component : m_update_ordered_components)
     {
@@ -136,10 +138,8 @@ void Entity::start_entity()
     if (m_state == EState::Awoken)
     {
         start_components();
-        on_start();
-        m_state = EState::Active;
 
-        // Start and move to active any children that were awoken above
+        // Children are moved before on_start() so on_start() can safely mutate child state.
         for (auto const& child : m_pending_children)
         {
             if (child.entity->get_entity_state() == EState::Awoken)
@@ -156,6 +156,9 @@ void Entity::start_entity()
             }
         }
         m_pending_children.clear();
+
+        on_start();
+        m_state = EState::Active;
     }
     else
     {
@@ -310,6 +313,13 @@ void Entity::set_inactive()
 {
     if (m_state == EState::Pending || m_state == EState::Destroyed) return;
     m_state = EState::Inactive;
+}
+
+//--------------------------------------------------------------------------------------------------
+void Entity::set_disabled()
+{
+    if (m_state == EState::Pending || m_state == EState::Destroyed) return;
+    m_state = EState::Disabled;
 }
 
 //--------------------------------------------------------------------------------------------------

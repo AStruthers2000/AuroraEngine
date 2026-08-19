@@ -56,6 +56,8 @@ public:
         Active,     ///< Normal operating state. update_entity() is called every frame.
         Inactive,   ///< Paused. update_entity() is skipped, but render_entity() still runs.
                     ///< Transition freely to/from Active via set_active() / set_inactive().
+        Disabled,   ///< Effectively cut out of the main loop, but not deallocated. Doesn't receive
+                    ///< any events, updates, or rendering passes.
         Pending,    ///< Constructed but not yet initialized. The next initialization pass will
                     ///< call awake_entity(), transitioning this Entity to Awoken.
         Awoken,     ///< Awake phase complete. All Components are initialized and accessible.
@@ -295,6 +297,14 @@ public:
     /// @note  Has no effect if the Entity is in the Pending, Awoken, or Destroyed state.
     ////////////////////////////////////////////////////////////////////////////////////////////////
     void set_inactive();
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Transitions this Entity to the Disabled state. While Disabled, all lifecycle hooks
+    ///        are skipped; no update_entity(), no render_entity(), no events, etc.
+    ///
+    /// @note  Has no effect if the Entity is in the Pending, Awoken, or Destroyed state.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void set_disabled();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @return The current EState of this Entity.

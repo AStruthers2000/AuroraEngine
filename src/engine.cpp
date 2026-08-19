@@ -200,7 +200,11 @@ void Engine::process_input()
             }
             case SDL_EventType::SDL_EVENT_MOUSE_BUTTON_DOWN:
             {
-                MouseButtonPressedEvent event(sdl_event.button.button, sdl_event.button.x, sdl_event.button.y);
+                float logical_x{}, logical_y{};
+                SDL_RenderCoordinatesFromWindow(m_window->get_sdl_renderer(),
+                                                sdl_event.button.x, sdl_event.button.y,
+                                                &logical_x, &logical_y);
+                MouseButtonPressedEvent event(sdl_event.button.button, logical_x, logical_y);
                 broadcast_event(event);
                 break;
             }
@@ -212,7 +216,11 @@ void Engine::process_input()
             }
             case SDL_EventType::SDL_EVENT_MOUSE_MOTION:
             {
-                MouseMovedEvent event(sdl_event.motion.x, sdl_event.motion.y);
+                float logical_x{}, logical_y{};
+                SDL_RenderCoordinatesFromWindow(m_window->get_sdl_renderer(),
+                                                sdl_event.motion.x, sdl_event.motion.y,
+                                                &logical_x, &logical_y);
+                MouseMovedEvent event(logical_x, logical_y);
                 broadcast_event(event);
                 break;
             }

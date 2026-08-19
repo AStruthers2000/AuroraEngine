@@ -314,8 +314,8 @@ public:
 
     virtual void on_initialize() override
     {
-        // std::println("Test layer initialized");
-        add_entity<TestEntity>();
+        // // std::println("Test layer initialized");
+        // add_entity<TestEntity>();
 
         Core::UI::Panel::Configuration anchor_box_cfg;
         anchor_box_cfg.offset = { 400.f, 300.f };
@@ -346,14 +346,61 @@ public:
             anchor_box_ptr->add_child_entity<Core::UI::Label>(label_factory(Core::UI::Anchor::Center,      "Center",       { 0.f,   0.f }));
             anchor_box_ptr->add_child_entity<Core::UI::Label>(label_factory(Core::UI::Anchor::BottomLeft,  "Bottom Left",  { 8.f,  -8.f }));
             anchor_box_ptr->add_child_entity<Core::UI::Label>(label_factory(Core::UI::Anchor::BottomRight, "Bottom Right", { -8.f, -8.f }));
+
+            Core::UI::Button::Configuration button_cfg;
+            button_cfg.offset = { -5, 0 };
+            button_cfg.button_size = { 110, 25 };
+            button_cfg.border_size = { 1, 1 };
+            button_cfg.button_color = { 100, 128, 128, 255 };
+            button_cfg.self_anchor = Core::UI::Anchor::CenterRight;
+            button_cfg.parent_anchor = Core::UI::Anchor::CenterRight;
+            button_cfg.on_button_hovered = [](Core::MouseMovedEvent const& e){ std::println("Hovered"); };
+            button_cfg.on_button_pressed = [](Core::MouseButtonPressedEvent const& e){ std::println("Clicked"); };
+            button_cfg.on_button_released = [](Core::MouseButtonReleasedEvent const& e){ std::println("Released"); };
+            button_cfg.on_button_unhovered = [](Core::MouseMovedEvent const& e){ std::println("Unhovered"); };
+            auto btn = anchor_box_ptr->add_child_entity<Core::UI::Button>(button_cfg);
+            if (auto button = btn.lock())
+            {
+                button->add_child_entity<Core::UI::Label>(label_factory(Core::UI::Anchor::Center, "Tiny Button", { 0, 0 }));
+            }
         }
 
-        Core::UI::Panel::Configuration panel_cfg;
-        panel_cfg.offset       = {10, 10};
-        panel_cfg.panel_size   = {100, 100};
-        panel_cfg.border_size  = {2, 2};
-        panel_cfg.border_color = {255, 0, 0, 255};
-        m_panel = add_entity<Core::UI::Panel>(panel_cfg);
+
+        Core::UI::Button::Configuration button_cfg;
+        button_cfg.offset        = {10, 10};
+        button_cfg.button_size   = {400, 100};
+        button_cfg.border_size   = {5, 5};
+        button_cfg.hovered_color = { 255, 0, 0, 255 };
+        button_cfg.hovered_decoration = Core::UI::Button::EDecorationType::COLOR_CHANGE_BORDER;
+        button_cfg.clicked_decoration = Core::UI::Button::EDecorationType::HIGHLIGHTED;
+        button_cfg.on_button_pressed = [anchor_box](Core::MouseButtonPressedEvent const& e)
+                                        {
+                                            if (auto anchor_box_ptr = anchor_box.lock())
+                                            {
+                                                auto state = anchor_box_ptr->get_entity_state();
+                                                if (state == Core::Entity::EState::Active)
+                                                {
+                                                    anchor_box_ptr->set_disabled();
+                                                }
+                                                else
+                                                {
+                                                    anchor_box_ptr->set_active();
+                                                }
+                                            }
+                                        };
+        auto button_ptr = add_entity<Core::UI::Button>(button_cfg);
+        if (auto button = button_ptr.lock())
+        {
+            Core::UI::Label::Configuration label_cfg;
+            label_cfg.self_anchor   = Core::UI::Anchor::CenterRight;
+            label_cfg.parent_anchor = Core::UI::Anchor::CenterRight;
+            label_cfg.offset        = { -7, 0 };
+            label_cfg.font_path     = Core::Font::LIBBY_REGULAR;
+            label_cfg.point_size    = 20;
+            label_cfg.text          = "Click Me!";
+            label_cfg.color         = { 0, 128, 128, 255 };
+            button->add_child_entity<Core::UI::Label>(label_cfg);
+        }
     }
 
     virtual void on_update(float delta_time) override

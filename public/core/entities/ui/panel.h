@@ -76,6 +76,11 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @return The current fill color of the panel.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    SDL_Color get_panel_color() const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Changes the fill color of the panel at runtime.
     ///
     /// @param [in] new_color - New RGBA fill color.
@@ -92,21 +97,38 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Changes the border thickness at runtime.
     ///
-    /// @param [in] new_border_size - New border size in pixels (width and height of the border band).
+    /// @param [in] new_border_size - New border thickness in pixels (width, height).
     ////////////////////////////////////////////////////////////////////////////////////////////////
     void set_border_size(glm::vec2 const& new_border_size);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @return The current border color. Only meaningful while the border is shown - see
+    ///         set_has_border().
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    SDL_Color get_border_color() const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Changes the border color at runtime.
     ///
     /// @param [in] new_color - New RGBA border color.
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    void set_border_color(SDL_Color const& new_color); 
+    void set_border_color(SDL_Color const& new_color);
 
 private:
+    /// @brief Primary panel color.
     SDL_Color m_panel_color{};
+
+    /// @brief Whether the panel is rendering a border this frame. If true, border dimensions will
+    ///        be specified by @p m_border_size and @p m_border_color. If false, those parameters
+    ///        are ignored.
     bool m_has_border{};
+
+    /// @brief The dimensions of the border. The x dimension controls the width of vertical border
+    ///        bars, and the y dimension controls the height of horizontal border bars. Only
+    ///        relevant if @p m_has_border is true.
     glm::vec2 m_border_size{};
+
+    /// @brief The color of the border. Only relevant if @p m_has_border is true.
     SDL_Color m_border_color{};
 
     /// @brief Cached panel Transform.
@@ -114,7 +136,6 @@ private:
 
     /// @brief Cached panel foreground.
     std::weak_ptr<RectRenderComponent> m_panel{};
-
 };
 
 } // namespace Core::UI

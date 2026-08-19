@@ -53,4 +53,4 @@ std::string_view Label::get_text() const
     return {};
 }
 
-} // namespace Core
+} // namespace Core::UI

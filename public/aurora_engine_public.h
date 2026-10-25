@@ -18,14 +18,16 @@
 #include "core/layer.h"
 #include "core/sdl_color_ops.h"
 
+#include "core/components/anchor_component.h"
 #include "core/components/rect_render_component.h"
 #include "core/components/text_render_component.h"
 #include "core/components/transform_component.h"
-#include "core/components/anchor_component.h"
 
 #include "core/entities/ui/button.h"
 #include "core/entities/ui/label.h"
 #include "core/entities/ui/panel.h"
+#include "core/entities/ui/scrollable_log.h"
+#include "core/entities/ui/scrollable_viewport.h"
 
 #include "core/events/events_public.h"
 

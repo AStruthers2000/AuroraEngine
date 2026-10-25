@@ -228,6 +228,20 @@ public:
     virtual void on_render(SDL_Renderer* renderer) {}
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Post-render hook. Called every frame for Active and Inactive Entities, after
+    ///        on_render() and after all child Entities have finished rendering.
+    ///
+    /// @note  Must not: mutate engine state. Same read-only contract as on_render().
+    ///
+    /// @note  Use this override to:
+    ///         - Undo renderer-global state changes made in on_render() (e.g. restore a clip
+    ///           rect) now that this Entity's subtree is done drawing.
+    ///
+    /// @param [in] renderer - The SDL renderer for the current frame.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    virtual void on_post_render(SDL_Renderer* renderer) {}
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Cleanup hook. Called once before this Entity is destroyed.
     ///
     /// @note  Contract: all Components on this Entity are still alive and accessible. Component
@@ -893,7 +907,7 @@ private:
 
     /// @brief The Layer that owns this Entity.
     Layer& m_owning_layer;
-    
+
     /// @brief Parent Entity, or nullptr for root Entities.
     Entity* m_parent{ nullptr };
 
@@ -905,7 +919,7 @@ private:
 
     /// @brief Children awaiting initialization.
     std::vector<PendingChild> m_pending_children{};
-    
+
     /// @brief Active child Entities, sorted by update_order.
     std::vector<std::shared_ptr<Entity>> m_children{};
 
@@ -916,7 +930,7 @@ private:
 
     /// @brief Components awaiting awake_components().
     std::vector<PendingComponent> m_pending_components{};
-    
+
     /// @brief Active Component store, keyed by (type, tag).
     std::unordered_map<ComponentKey, std::shared_ptr<Component>, ComponentKeyHash> m_component_store{};
 

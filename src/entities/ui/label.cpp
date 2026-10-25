@@ -15,18 +15,22 @@ Label::Label(Entity::Owner owner, Configuration const& config)
     , m_point_size(config.point_size)
     , m_initial_text(config.text)
     , m_initial_color(config.color)
+    , m_initial_wrap_width(config.wrap_width)
 {
 }
 
 //--------------------------------------------------------------------------------------------------
 void Label::on_awake()
 {
+    UIElement::on_awake();
+
     TextRenderComponent::Configuration config
     {
         .font_path = m_font_path,
         .point_size = m_point_size,
         .text = m_initial_text,
         .color = m_initial_color,
+        .wrap_width = m_initial_wrap_width,
     };
     m_text_component = add_component<TextRenderComponent>("label", config);
 }
@@ -35,22 +39,37 @@ void Label::on_awake()
 void Label::set_text(std::string_view text)
 {
     if (auto ptr = m_text_component.lock())
+    {
         ptr->set_text(text);
-}
-
-//--------------------------------------------------------------------------------------------------
-void Label::set_color(SDL_Color color)
-{
-    if (auto ptr = m_text_component.lock())
-        ptr->set_color(color);
+    }
 }
 
 //--------------------------------------------------------------------------------------------------
 std::string_view Label::get_text() const
 {
     if (auto ptr = m_text_component.lock())
+    {
         return ptr->get_text();
+    }
     return {};
+}
+
+//--------------------------------------------------------------------------------------------------
+void Label::set_color(SDL_Color color)
+{
+    if (auto ptr = m_text_component.lock())
+    {
+        ptr->set_color(color);
+    }
+}
+
+//--------------------------------------------------------------------------------------------------
+void Label::set_wrap_width(int wrap_width)
+{
+    if (auto ptr = m_text_component.lock())
+    {
+        ptr->set_wrap_width(wrap_width);
+    }
 }
 
 } // namespace Core::UI

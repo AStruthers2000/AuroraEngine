@@ -215,6 +215,7 @@ void Entity::render_entity(SDL_Renderer* renderer)
     render_components(renderer);
     on_render(renderer);
     render_children(renderer);
+    on_post_render(renderer);
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -388,7 +389,7 @@ void Entity::flush_pending_children()
 {
     if (m_pending_children.empty()) return;
 
-    // Two-pass: awake all, then start all — same contract as Layer::initialize_entities
+    // Two-pass: awake all, then start all. Same contract as Layer::initialize_entities
     for (auto const& child : m_pending_children)
     {
         if (child.entity->get_entity_state() == EState::Pending)

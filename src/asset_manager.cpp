@@ -3,6 +3,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 #include "core/asset_manager.h"
 
+#include <glm/glm.hpp>
+
 namespace Core
 {
 
@@ -86,7 +88,7 @@ std::weak_ptr<TTF_Font> AssetManager::get_font(std::string_view path, int point_
     {
         load_font(path, point_size);
     }
-    
+
     // Try to find the font in the font store (either it was already loaded, or it wasn't loaded but
     // now is loaded)
     if (m_font_store.contains(font_key))
@@ -124,6 +126,33 @@ bool AssetManager::free_fonts()
 {
     m_font_store.clear();
     return true;
+}
+
+//--------------------------------------------------------------------------------------------------
+glm::vec2 AssetManager::measure_text(std::string_view path, int point_size, std::string_view text, int wrap_width)
+{
+    auto font_ptr = get_font(path, point_size).lock();
+    if (!font_ptr)
+    {
+        return { 0.f, 0.f };
+    }
+
+    // wrap_width is display-space; scale into the oversampled rasterization space, same as point_size.
+    int const scaled_wrap_width = wrap_width > 0
+        ? static_cast<int>(glm::round(static_cast<float>(wrap_width) * FONT_UPSCALING_FACTOR))
+        : 0;
+
+    int w{ 0 };
+    int h{ 0 };
+    if (!TTF_GetStringSizeWrapped(font_ptr.get(), text.data(), text.size(), scaled_wrap_width, &w, &h))
+    {
+        return { 0.f, 0.f };
+    }
+
+    return {
+        glm::round(static_cast<float>(w) * INVERSE_FONT_UPSCALING_FACTOR),
+        glm::round(static_cast<float>(h) * INVERSE_FONT_UPSCALING_FACTOR),
+    };
 }
 
 } // namespace Core

@@ -53,6 +53,9 @@ public:
         std::string_view text{};
         /// @brief Text color.
         SDL_Color color{ 255, 255, 255, 255 };
+        /// @brief Display-space width at which to word-wrap, or @c 0 (default) to only wrap on
+        ///        explicit newline characters.
+        int wrap_width{ 0 };
     };
 
 
@@ -93,6 +96,11 @@ public:
     void set_text(std::string_view text);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @return The current text string.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    std::string_view get_text() const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Changes the text color at runtime.
     ///
     /// @param [in] color - New RGBA text color.
@@ -100,9 +108,12 @@ public:
     void set_color(SDL_Color color);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    /// @return The current text string.
+    /// @brief Changes the word-wrap width at runtime.
+    ///
+    /// @param [in] wrap_width - Display-space width at which to word-wrap, or @c 0 to only wrap
+    ///                          on explicit newline characters.
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    std::string_view get_text() const;
+    void set_wrap_width(int wrap_width);
 
 private:
     /// @brief Font file path held until on_awake().
@@ -117,10 +128,13 @@ private:
     /// @brief Initial color held until on_awake().
     SDL_Color m_initial_color;
 
+    /// @brief Initial word-wrap width held until on_awake().
+    int m_initial_wrap_width;
+
     /// @brief Cached TextRenderComponent.
     std::weak_ptr<TextRenderComponent> m_text_component{};
 };
 
 } // namespace Core::UI
 
-#endif // CORE_ENTITIES_LABEL_ENTITY_H
+#endif // CORE_ENTITIES_UI_LABEL_H

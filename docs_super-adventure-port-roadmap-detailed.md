@@ -136,12 +136,12 @@ Move from debug text to production-capable text rendering usable by UI systems.
 Implement only the UI surface needed to fully reproduce Super Adventure’s one-screen UX.
 
 ### Engineering Tasks
-- [ ] Implement `Label` primitive (text + placement).
-- [ ] Implement `Panel` primitive (background + optional border).
-- [ ] Implement `Button` primitive with click callback and minimal state.
-- [ ] Implement `ScrollableLog` with bounded history and append API.
+- [x] Implement `Label` primitive (text + placement).
+- [x] Implement `Panel` primitive (background + optional border).
+- [x] Implement `Button` primitive with click callback and minimal state.
+- [x] Implement `ScrollableLog` with bounded history and append API.
 - [ ] Implement `ListView` with two-column row rendering for inventory/quests.
-- [ ] Define one consistent coordinate/layout scheme for all UI primitives.
+- [x] Define one consistent coordinate/layout scheme for all UI primitives.
 
 ### Code Areas
 - new UI component files

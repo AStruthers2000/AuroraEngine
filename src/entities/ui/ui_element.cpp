@@ -18,6 +18,12 @@ UIElement::UIElement(Entity::Owner owner, Configuration const& config)
 }
 
 //--------------------------------------------------------------------------------------------------
+void UIElement::on_awake()
+{
+    m_anchor = get_component<AnchorComponent>();
+}
+
+//--------------------------------------------------------------------------------------------------
 void UIElement::set_self_anchor(Anchor anchor)
 {
     if (auto anchor_ptr = m_anchor.lock())

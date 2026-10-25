@@ -373,7 +373,7 @@ public:
         button_cfg.hovered_color = { 255, 0, 0, 255 };
         button_cfg.hovered_decoration = Core::UI::Button::EDecorationType::COLOR_CHANGE_BORDER;
         button_cfg.clicked_decoration = Core::UI::Button::EDecorationType::HIGHLIGHTED;
-        button_cfg.on_button_pressed = [anchor_box](Core::MouseButtonPressedEvent const& e)
+        button_cfg.on_button_pressed = [anchor_box, this](Core::MouseButtonPressedEvent const& e)
                                         {
                                             if (auto anchor_box_ptr = anchor_box.lock())
                                             {
@@ -385,6 +385,12 @@ public:
                                                 else
                                                 {
                                                     anchor_box_ptr->set_active();
+                                                }
+
+                                                if (auto log = m_log.lock())
+                                                {
+                                                    std::string msg = "Hello world this is a really long message that is sure to cause word wrap hopefully I am not underestimating how long this message needs to be " + std::to_string(this->m_counter++);
+                                                    log->append_log_message(std::move(msg));
                                                 }
                                             }
                                         };
@@ -401,6 +407,15 @@ public:
             label_cfg.color         = { 0, 128, 128, 255 };
             button->add_child_entity<Core::UI::Label>(label_cfg);
         }
+
+        Core::UI::ScrollableLog::Font log_font;
+        log_font.font_path  = Core::Font::COLLEGE_BOLD;
+        log_font.color      = { 0, 166, 166, 255 };
+        log_font.point_size = 20;
+        Core::UI::ScrollableLog::Configuration log_cfg;
+        log_cfg.offset = { 800, 50 };
+        log_cfg.font   = log_font;
+        m_log = add_entity<Core::UI::ScrollableLog>(log_cfg);
     }
 
     virtual void on_update(float delta_time) override
@@ -430,6 +445,8 @@ public:
 
 private:
     std::weak_ptr<Core::UI::Panel> m_panel{};
+    std::weak_ptr<Core::UI::ScrollableLog> m_log{};
+    int m_counter{ 0 };
 };
 
 int main()

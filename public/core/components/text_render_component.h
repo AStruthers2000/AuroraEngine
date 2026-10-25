@@ -50,11 +50,14 @@ public:
         /// @brief Path to the font file (relative to data root).
         std::string_view font_path{};
         /// @brief Font size in points.
-        int              point_size{ 12 };
+        int point_size{ 12 };
         /// @brief Initial text string to display.
         std::string_view text{};
         /// @brief Initial text color (RGBA).
-        SDL_Color        color{ 255, 255, 255, 255 };
+        SDL_Color color{ 255, 255, 255, 255 };
+        /// @brief Display-space width at which to word-wrap, or @c 0 (default) to only wrap on
+        ///        explicit newline characters.
+        int wrap_width{ 0 };
     };
 
 
@@ -130,6 +133,16 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////
     void set_color(SDL_Color color);
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @brief Changes the word-wrap width. The backing SDL_Texture is rebuilt lazily on the next
+    ///        on_render() call, and the sibling TransformComponent's size is re-measured
+    ///        immediately.
+    ///
+    /// @param [in] wrap_width - Display-space width at which to word-wrap, or @c 0 to only wrap
+    ///                          on explicit newline characters.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    void set_wrap_width(int wrap_width);
+
 private:
     ////////////////////////////////////////////////////////////////////////////////////////////////
     /// @brief Destroys the existing SDL_Texture (if any) and rasterizes @c m_text into a new one
@@ -150,6 +163,12 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////
     void measure_and_apply_size();
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    /// @return @c m_wrap_width scaled into the oversampled rasterization space (see
+    ///         AssetManager::FONT_UPSCALING_FACTOR), or @c 0 if word-wrap is disabled.
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    int scaled_wrap_width() const;
+
     /// @brief Font file path stored for AssetManager lookup.
     std::string  m_font_path{};
 
@@ -167,6 +186,9 @@ private:
 
     /// @brief Current text color.
     SDL_Color m_color{};
+
+    /// @brief Current word-wrap width. @c 0 means wrap only on explicit newline characters.
+    int m_wrap_width{};
 
     /// @brief Lazily built GPU texture.
     SDL_Texture* m_cached_texture{ nullptr };
